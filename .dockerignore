@@ -1,0 +1,10 @@
+.git
+.cache
+.local
+.agents
+attached_assets
+uploads/listings/*
+uploads/profiles/*
+.env
+__pycache__
+*.pyc

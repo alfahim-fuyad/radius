@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: radius
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: APP_ENV
+        value: production
+
+      - key: APP_URL
+        sync: false
+
+      # Aiven MySQL
+      - key: DB_HOST
+        sync: false
+
+      - key: DB_PORT
+        value: "19710"
+
+      - key: DB_NAME
+        value: defaultdb
+
+      - key: DB_USER
+        value: avnadmin
+
+      - key: DB_PASSWORD
+        sync: false
+
+      - key: DB_SSL_MODE
+        value: REQUIRED
+
+      - key: DB_SSL_CA_PEM
+        sync: false
+
+      # FastAPI service
+      - key: AI_SERVICE_URL
+        sync: false
+
+      - key: MAX_UPLOAD_MB
+        value: "5"
+
+      - key: DEFAULT_RADIUS_KM
+        value: "5"

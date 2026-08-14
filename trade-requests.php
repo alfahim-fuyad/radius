@@ -1,0 +1,227 @@
+<?php
+
+require_once __DIR__.'/includes/auth.php';
+require_once __DIR__.'/includes/functions.php';
+require_once __DIR__.'/includes/csrf.php';
+
+$u = require_login();
+
+$s = db()->prepare("
+    SELECT
+        t.*,
+        l.title,
+        b.name AS buyer_name,
+        s.name AS seller_name
+    FROM trade_requests t
+    JOIN listings l ON l.id = t.listing_id
+    JOIN users b ON b.id = t.buyer_id
+    JOIN users s ON s.id = t.seller_id
+    WHERE t.buyer_id = ?
+       OR t.seller_id = ?
+    ORDER BY t.updated_at DESC
+");
+
+$s->execute([
+    $u['id'],
+    $u['id']
+]);
+
+$trades = $s->fetchAll();
+
+$pageTitle = 'Trades';
+
+include __DIR__.'/includes/header.php';
+?>
+
+
+<div class="section-head">
+
+    <div>
+
+        <h2>Trade requests</h2>
+
+        <p>
+            Requested → accepted/rejected → cancelled or completed.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="table-wrap">
+
+    <table class="table">
+
+        <tr>
+            <th>Listing</th>
+            <th>Buyer</th>
+            <th>Seller</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+
+
+        <?php foreach($trades as $t): ?>
+
+        <tr>
+
+
+            <!-- Listing -->
+
+            <td>
+
+                <a href="/listing.php?id=<?=$t['listing_id']?>">
+
+                    <?=e($t['title'])?>
+
+                </a>
+
+            </td>
+
+
+            <!-- Buyer -->
+
+            <td>
+
+                <a href="/profile.php?id=<?=$t['buyer_id']?>">
+
+                    <?=e($t['buyer_name'])?>
+
+                </a>
+
+            </td>
+
+
+            <!-- Seller -->
+
+            <td>
+
+                <a href="/profile.php?id=<?=$t['seller_id']?>">
+
+                    <?=e($t['seller_name'])?>
+
+                </a>
+
+            </td>
+
+
+            <!-- Status -->
+
+            <td>
+
+                <?=e($t['status'])?>
+
+            </td>
+
+
+            <!-- Actions -->
+
+            <td>
+
+                <form
+                    method="post"
+                    action="/api/trade.php"
+                    class="actions"
+                    style="margin:0"
+                >
+
+                    <?=csrf_field()?>
+
+                    <input
+                        type="hidden"
+                        name="trade_id"
+                        value="<?=$t['id']?>"
+                    >
+
+
+                    <?php if(
+                        (int)$t['seller_id'] === (int)$u['id']
+                        &&
+                        $t['status'] === 'requested'
+                    ): ?>
+
+                        <button
+                            class="btn btn-sm"
+                            name="action"
+                            value="accept"
+                        >
+                            Accept
+                        </button>
+
+
+                        <button
+                            class="btn btn-sm btn-light"
+                            name="action"
+                            value="reject"
+                        >
+                            Reject
+                        </button>
+
+                    <?php endif; ?>
+
+
+                    <?php if(
+                        in_array(
+                            $t['status'],
+                            ['requested','accepted'],
+                            true
+                        )
+                    ): ?>
+
+                        <button
+                            class="btn btn-sm btn-light"
+                            name="action"
+                            value="cancel"
+                        >
+                            Cancel
+                        </button>
+
+                    <?php endif; ?>
+
+
+                    <?php if(
+                        $t['status'] === 'accepted'
+                    ): ?>
+
+                        <button
+                            class="btn btn-sm"
+                            name="action"
+                            value="complete"
+                        >
+                            Complete
+                        </button>
+
+                    <?php endif; ?>
+
+
+                    <?php if(
+                        $t['status'] === 'completed'
+                    ): ?>
+
+                        <a
+                            class="btn btn-sm btn-light"
+                            href="/review.php?trade_id=<?=$t['id']?>"
+                        >
+                            Review
+                        </a>
+
+                    <?php endif; ?>
+
+
+                </form>
+
+            </td>
+
+
+        </tr>
+
+        <?php endforeach; ?>
+
+
+    </table>
+
+</div>
+
+
+<?php include __DIR__.'/includes/footer.php'; ?>
