@@ -492,21 +492,6 @@ http://127.0.0.1:8001/docs
 
 ---
 
-# 🧪 Replit Setup
-
-1. Import the GitHub repository into Replit.
-2. Provision an external MySQL-compatible database if MySQL is unavailable in the Repl.
-3. Add the following Secrets:
-
-```text
-DB_HOST
-DB_PORT
-DB_NAME
-DB_USER
-DB_PASSWORD
-AI_SERVICE_URL=http://127.0.0.1:8001
-```
-
 4. Import the database schema:
 
 ```bash
