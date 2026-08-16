@@ -5,6 +5,7 @@ import os
 import sys
 from pathlib import Path
 
+import imagehash
 import pymysql
 
 # Allow running this script directly: python training/generate_image_embeddings.py
@@ -69,9 +70,10 @@ def main() -> None:
 
             cursor.execute(
                 """
-                SELECT id, listing_id, image_path
+                SELECT id, listing_id, image_path, image_hash, image_embedding
                 FROM listing_images
-                WHERE image_embedding IS NULL
+                WHERE image_hash IS NULL
+                   OR image_embedding IS NULL
                 """
             )
 
@@ -98,19 +100,26 @@ def main() -> None:
 
                 image = load_image_from_bytes(data)
 
-                embedding = encode_image(image)
+                image_hash = str(imagehash.phash(image))
+                embedding_json = None
 
-                embedding_json = json.dumps(embedding)
+                if not row["image_embedding"]:
+                    embedding = encode_image(image)
+                    embedding_json = json.dumps(embedding)
 
                 with conn.cursor() as cursor:
 
                     cursor.execute(
                         """
                         UPDATE listing_images
-                        SET image_embedding = %s
+                        SET image_hash = COALESCE(NULLIF(%s, ''), image_hash),
+                            image_embedding = COALESCE(
+                                NULLIF(%s, ''),
+                                image_embedding
+                            )
                         WHERE id = %s
                         """,
-                        (embedding_json, image_id),
+                        (image_hash, embedding_json, image_id),
                     )
 
                 conn.commit()

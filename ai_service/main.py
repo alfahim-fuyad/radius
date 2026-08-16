@@ -19,14 +19,26 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-from model.image_encoder import encode_image
-from image_similarity.embedding import load_image_from_bytes
-from image_similarity.similarity import (
-    classify_similarity,
-    cosine_similarity,
-    similarity_percentage,
-    similarity_to_risk_score,
-)
+try:
+    # Package imports are required when uvicorn starts from the project root.
+    from ai_service.model.image_encoder import encode_image
+    from ai_service.image_similarity.embedding import load_image_from_bytes
+    from ai_service.image_similarity.similarity import (
+        classify_similarity,
+        cosine_similarity,
+        similarity_percentage,
+        similarity_to_risk_score,
+    )
+except ModuleNotFoundError:
+    # Keep direct execution from inside ai_service working for local scripts.
+    from model.image_encoder import encode_image
+    from image_similarity.embedding import load_image_from_bytes
+    from image_similarity.similarity import (
+        classify_similarity,
+        cosine_similarity,
+        similarity_percentage,
+        similarity_to_risk_score,
+    )
 
 
 # ============================================================
