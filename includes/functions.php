@@ -47,10 +47,7 @@ function e(?string $value): string
 
 function redirect(string $path): never
 {
-    header(
-        'Location: ' . $path
-    );
-
+    header('Location: ' . $path);
     exit;
 }
 
@@ -60,9 +57,7 @@ function flash(
     string $message
 ): void {
 
-    $_SESSION[
-        'flash_' . $type
-    ] = $message;
+    $_SESSION['flash_' . $type] = $message;
 }
 
 
@@ -70,15 +65,11 @@ function pull_flash(
     string $type
 ): ?string {
 
-    $key =
-        'flash_' . $type;
+    $key = 'flash_' . $type;
 
-    $value =
-        $_SESSION[$key] ?? null;
+    $value = $_SESSION[$key] ?? null;
 
-    unset(
-        $_SESSION[$key]
-    );
+    unset($_SESSION[$key]);
 
     return $value;
 }
@@ -107,18 +98,10 @@ function trust_label(
 ): string {
 
     return [
-        'safe' =>
-            'Verified',
-
-        'low_risk' =>
-            'Under Review',
-
-        'suspicious' =>
-            'Suspicious',
-
-        'high_risk' =>
-            'Flagged'
-
+        'safe'       => 'Verified',
+        'low_risk'   => 'Under Review',
+        'suspicious' => 'Suspicious',
+        'high_risk'  => 'Flagged'
     ][$status] ?? 'Unchecked';
 }
 
@@ -142,18 +125,14 @@ function trust_state(
 
     return match ($status) {
 
-        'safe' =>
-            'verified',
+        'safe' => 'verified',
 
-        'low_risk' =>
-            'review',
+        'low_risk' => 'review',
 
         'suspicious',
-        'high_risk' =>
-            'danger',
+        'high_risk' => 'danger',
 
-        default =>
-            'review'
+        default => 'review'
     };
 }
 
@@ -262,49 +241,155 @@ function stable_visual_index(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Listing Visual
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+|
+| Uploaded DB image has priority.
+|
+| Example:
+|
+| /uploads/listings/abc123.png
+|
+| If image_path exists, this function will NEVER use
+| the Unsplash fallback.
+|
+|--------------------------------------------------------------------------
+*/
+
 function listing_visual(
     array $listing
 ): string {
 
-    $uploaded =
-        trim(
-            (string)(
-                $listing['image_path'] ?? ''
-            )
+    /*
+    |--------------------------------------------------------------------------
+    | Uploaded image
+    |--------------------------------------------------------------------------
+    */
+
+    $uploaded = trim(
+        (string)(
+            $listing['image_path'] ?? ''
+        )
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | If database contains uploaded image
+    |--------------------------------------------------------------------------
+    */
+
+    if ($uploaded !== '') {
+
+        /*
+         * Normalize Windows-style path.
+         */
+        $uploaded = str_replace(
+            '\\',
+            '/',
+            $uploaded
         );
 
 
-    if ($uploaded !== '') {
-        return $uploaded;
+        /*
+         * Remove accidental duplicate leading slashes.
+         *
+         * Example:
+         *
+         * //uploads/listings/a.png
+         *
+         * becomes:
+         *
+         * /uploads/listings/a.png
+         */
+        $uploaded =
+            '/' .
+            ltrim(
+                $uploaded,
+                '/'
+            );
+
+
+        /*
+         * Only allow our own upload path.
+         *
+         * This prevents unexpected external paths.
+         */
+        if (
+            str_starts_with(
+                $uploaded,
+                '/uploads/listings/'
+            )
+        ) {
+
+            return $uploaded;
+        }
     }
 
 
-    $all =
-        radius_visuals();
+    /*
+    |--------------------------------------------------------------------------
+    | Fallback image
+    |--------------------------------------------------------------------------
+    */
+
+    $all = radius_visuals();
 
 
-    $category =
-        strtolower(
+    $category = strtolower(
+        trim(
             (string)(
                 $listing['category']
                 ?? 'accessories'
             )
-        );
+        )
+    );
 
+
+    /*
+    * Normalize category.
+    */
+
+    $category = str_replace(
+        [
+            '-',
+            '_'
+        ],
+        ' ',
+        $category
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Category image
+    |--------------------------------------------------------------------------
+    */
 
     $images =
         $all[$category]
         ?? $all['accessories'];
 
 
-    $seed =
-        strtolower(
+    /*
+    |--------------------------------------------------------------------------
+    | Stable image selection
+    |--------------------------------------------------------------------------
+    */
+
+    $seed = strtolower(
+        trim(
             (string)(
                 $listing['title']
                 ?? $listing['id']
                 ?? $category
             )
-        );
+        )
+    );
 
 
     $index =
@@ -313,6 +398,12 @@ function listing_visual(
             count($images)
         );
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Phone-specific visual rules
+    |--------------------------------------------------------------------------
+    */
 
     if ($category === 'phone') {
 
@@ -323,11 +414,10 @@ function listing_visual(
             )
         ) {
 
-            $index =
-                min(
-                    3,
-                    count($images) - 1
-                );
+            $index = min(
+                3,
+                count($images) - 1
+            );
 
         } elseif (
             str_contains(
@@ -340,11 +430,10 @@ function listing_visual(
             )
         ) {
 
-            $index =
-                min(
-                    2,
-                    count($images) - 1
-                );
+            $index = min(
+                2,
+                count($images) - 1
+            );
 
         } elseif (
             str_contains(
@@ -374,9 +463,7 @@ function ai_json(
     int $timeout = 12
 ): ?array {
 
-    if (
-        !function_exists('curl_init')
-    ) {
+    if (!function_exists('curl_init')) {
         return null;
     }
 
@@ -406,19 +493,16 @@ function ai_json(
     }
 
 
-    $ch =
-        curl_init($url);
+    $ch = curl_init($url);
 
 
     curl_setopt_array(
         $ch,
         [
 
-            CURLOPT_RETURNTRANSFER =>
-                true,
+            CURLOPT_RETURNTRANSFER => true,
 
-            CURLOPT_POST =>
-                true,
+            CURLOPT_POST => true,
 
             CURLOPT_HTTPHEADER => [
 
@@ -427,20 +511,16 @@ function ai_json(
                 'Accept: application/json'
             ],
 
-            CURLOPT_POSTFIELDS =>
-                $json,
+            CURLOPT_POSTFIELDS => $json,
 
-            CURLOPT_CONNECTTIMEOUT =>
-                3,
+            CURLOPT_CONNECTTIMEOUT => 3,
 
-            CURLOPT_TIMEOUT =>
-                $timeout
+            CURLOPT_TIMEOUT => $timeout
         ]
     );
 
 
-    $body =
-        curl_exec($ch);
+    $body = curl_exec($ch);
 
 
     $code =
@@ -450,8 +530,7 @@ function ai_json(
         );
 
 
-    $err =
-        curl_error($ch);
+    $err = curl_error($ch);
 
 
     curl_close($ch);
@@ -527,11 +606,9 @@ function ai_hash_image(
         $ch,
         [
 
-            CURLOPT_RETURNTRANSFER =>
-                true,
+            CURLOPT_RETURNTRANSFER => true,
 
-            CURLOPT_POST =>
-                true,
+            CURLOPT_POST => true,
 
             CURLOPT_POSTFIELDS => [
 
@@ -545,11 +622,9 @@ function ai_hash_image(
                     )
             ],
 
-            CURLOPT_CONNECTTIMEOUT =>
-                3,
+            CURLOPT_CONNECTTIMEOUT => 3,
 
-            CURLOPT_TIMEOUT =>
-                12
+            CURLOPT_TIMEOUT => 12
         ]
     );
 
@@ -609,6 +684,233 @@ function ai_hash_image(
     return is_string($hash)
         ? $hash
         : null;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| AI Image Embedding (ML)
+|--------------------------------------------------------------------------
+*/
+
+function ai_image_embedding(
+    string $absolutePath
+): ?array {
+
+    if (
+        !function_exists('curl_init') ||
+        !is_file($absolutePath)
+    ) {
+        return null;
+    }
+
+
+    $mime =
+        mime_content_type(
+            $absolutePath
+        ) ?: 'image/jpeg';
+
+
+    $url =
+        rtrim(
+            AI_SERVICE_URL,
+            '/'
+        ) .
+        '/image-embedding';
+
+
+    $ch =
+        curl_init($url);
+
+
+    curl_setopt_array(
+        $ch,
+        [
+
+            CURLOPT_RETURNTRANSFER => true,
+
+            CURLOPT_POST => true,
+
+            CURLOPT_POSTFIELDS => [
+
+                'image' =>
+                    new CURLFile(
+                        $absolutePath,
+                        $mime,
+                        basename(
+                            $absolutePath
+                        )
+                    )
+            ],
+
+            CURLOPT_CONNECTTIMEOUT => 5,
+
+            /*
+             * ResNet50 inference is heavier than pHash,
+             * give it more time on cold starts.
+             */
+            CURLOPT_TIMEOUT => 25
+        ]
+    );
+
+
+    $body =
+        curl_exec($ch);
+
+
+    $code =
+        (int)curl_getinfo(
+            $ch,
+            CURLINFO_HTTP_CODE
+        );
+
+
+    $err =
+        curl_error($ch);
+
+
+    curl_close($ch);
+
+
+    if (
+        $body === false ||
+        $code < 200 ||
+        $code >= 300
+    ) {
+
+        error_log(
+            'AI image embedding request failed: ' .
+            $err .
+            ' HTTP ' .
+            $code
+        );
+
+        return null;
+    }
+
+
+    $data =
+        json_decode(
+            $body,
+            true
+        );
+
+
+    if (!is_array($data)) {
+        return null;
+    }
+
+
+    $embedding =
+        $data['embedding']
+        ?? null;
+
+
+    if (
+        !is_array($embedding) ||
+        $embedding === []
+    ) {
+        return null;
+    }
+
+
+    return $embedding;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| AI Compare Image (ML)
+|--------------------------------------------------------------------------
+*/
+
+function ai_compare_image(
+    array $queryEmbedding,
+    array $existingEmbeddings
+): ?array {
+
+    if ($queryEmbedding === []) {
+        return null;
+    }
+
+    $payload = [
+
+        'query_embedding' =>
+            $queryEmbedding,
+
+        'existing_embeddings' =>
+            $existingEmbeddings
+    ];
+
+    return ai_json(
+        '/compare-image',
+        $payload,
+        20
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Existing Image Embeddings (for comparison)
+|--------------------------------------------------------------------------
+*/
+
+function get_existing_image_embeddings(
+    int $excludeListingId,
+    int $limit = 500
+): array {
+
+    $pdo = db();
+
+    $stmt =
+        $pdo->prepare(
+            "SELECT listing_id, image_embedding
+             FROM listing_images
+             WHERE listing_id <> ?
+             AND image_embedding IS NOT NULL
+             AND image_embedding <> ''
+             ORDER BY id DESC
+             LIMIT ?"
+        );
+
+    $stmt->bindValue(1, $excludeListingId, PDO::PARAM_INT);
+    $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $rows =
+        $stmt->fetchAll(
+            PDO::FETCH_ASSOC
+        );
+
+    $result = [];
+
+    foreach ($rows as $row) {
+
+        $decoded =
+            json_decode(
+                (string)$row['image_embedding'],
+                true
+            );
+
+        if (
+            !is_array($decoded) ||
+            $decoded === []
+        ) {
+            continue;
+        }
+
+        $result[] = [
+
+            'listing_id' =>
+                (int)$row['listing_id'],
+
+            'embedding' =>
+                $decoded
+        ];
+    }
+
+    return $result;
 }
 
 
@@ -692,7 +994,9 @@ function validate_listing_upload(
 
 
     if (
-        !isset($allowed[$mime])
+        !isset(
+            $allowed[$mime]
+        )
     ) {
 
         throw new RuntimeException(
@@ -762,10 +1066,9 @@ function save_listing_upload(
     [
         $mime,
         $ext
-    ] =
-        validate_listing_upload(
-            $file
-        );
+    ] = validate_listing_upload(
+        $file
+    );
 
 
     if (
@@ -822,10 +1125,26 @@ function save_listing_upload(
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Make sure file really exists
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        !is_file($dest)
+    ) {
+
+        throw new RuntimeException(
+            'Uploaded image was not saved correctly.'
+        );
+    }
+
+
     return [
 
         '/uploads/listings/' .
-            $name,
+        $name,
 
         $dest,
 
@@ -1053,23 +1372,6 @@ function seller_risk_context(
 |--------------------------------------------------------------------------
 | Fraud Analysis
 |--------------------------------------------------------------------------
-|
-| IMPORTANT:
-|
-| This function NEVER changes the original listing price.
-|
-| AI output:
-|
-| fraud_score
-| image_score
-| price_score
-| seller_score
-| text_score
-| policy_score
-|
-| These are risk scores only.
-|
-|--------------------------------------------------------------------------
 */
 
 function run_fraud_analysis(
@@ -1111,8 +1413,7 @@ function run_fraud_analysis(
 
     /*
     |--------------------------------------------------------------------------
-    | IMPORTANT:
-    | Preserve original price.
+    | Preserve original price
     |--------------------------------------------------------------------------
     */
 
@@ -1206,14 +1507,7 @@ function run_fraud_analysis(
 
     /*
     |--------------------------------------------------------------------------
-    | AI payload
-    |--------------------------------------------------------------------------
-    |
-    | Price here is READ-ONLY input for AI.
-    |
-    | AI can calculate price_score,
-    | but it must never return a replacement
-    | product price to be saved into listings.price.
+    | AI Payload
     |--------------------------------------------------------------------------
     */
 
@@ -1235,7 +1529,8 @@ function run_fraud_analysis(
             (string)$listing['item_condition'],
 
         /*
-         * ORIGINAL PRICE
+         * IMPORTANT:
+         * Original seller price.
          */
         'price' =>
             $originalPrice,
@@ -1258,7 +1553,7 @@ function run_fraud_analysis(
 
     /*
     |--------------------------------------------------------------------------
-    | Call AI
+    | Call AI (pHash + price + seller + text + policy)
     |--------------------------------------------------------------------------
     */
 
@@ -1272,6 +1567,77 @@ function run_fraud_analysis(
 
     if (!$result) {
         return null;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ML Image Similarity (ResNet50) — blend with pHash image_score
+    |--------------------------------------------------------------------------
+    */
+
+    $mlImageScore = null;
+
+    $ownEmbeddingStmt =
+        $pdo->prepare(
+            "SELECT image_embedding
+             FROM listing_images
+             WHERE listing_id = ?
+             AND image_embedding IS NOT NULL
+             AND image_embedding <> ''
+             LIMIT 1"
+        );
+
+    $ownEmbeddingStmt->execute([
+        $listingId
+    ]);
+
+    $ownEmbeddingRaw =
+        $ownEmbeddingStmt->fetchColumn();
+
+    if ($ownEmbeddingRaw) {
+
+        $decodedOwn =
+            json_decode(
+                (string)$ownEmbeddingRaw,
+                true
+            );
+
+        if (
+            is_array($decodedOwn) &&
+            $decodedOwn !== []
+        ) {
+
+            $existingEmbeddings =
+                get_existing_image_embeddings(
+                    $listingId
+                );
+
+            $compareResult =
+                ai_compare_image(
+                    $decodedOwn,
+                    $existingEmbeddings
+                );
+
+            $bestMatch =
+                $compareResult['best_match']
+                ?? null;
+
+            if (
+                is_array($bestMatch) &&
+                isset($bestMatch['risk_score'])
+            ) {
+
+                $mlImageScore =
+                    max(
+                        0.0,
+                        min(
+                            100.0,
+                            (float)$bestMatch['risk_score']
+                        )
+                    );
+            }
+        }
     }
 
 
@@ -1319,7 +1685,7 @@ function run_fraud_analysis(
 
     /*
     |--------------------------------------------------------------------------
-    | Fraud score
+    | Fraud score (from Python, pHash-based)
     |--------------------------------------------------------------------------
     */
 
@@ -1330,7 +1696,12 @@ function run_fraud_analysis(
         );
 
 
-    if (!is_finite($fraudScore)) {
+    if (
+        !is_finite(
+            $fraudScore
+        )
+    ) {
+
         $fraudScore = 0;
     }
 
@@ -1388,7 +1759,7 @@ function run_fraud_analysis(
 
     /*
     |--------------------------------------------------------------------------
-    | Normalize component scores
+    | Normalize scores
     |--------------------------------------------------------------------------
     */
 
@@ -1444,24 +1815,65 @@ function run_fraud_analysis(
 
     /*
     |--------------------------------------------------------------------------
-    | Moderation information
+    | Blend pHash image_score with ML image_score (if available)
     |--------------------------------------------------------------------------
     |
-    | IMPORTANT FIX:
+    | 50% pHash + 50% ResNet50 ML similarity.
+    | If ML score is unavailable (AI service down, no embedding yet),
+    | fall back to pHash-only score — nothing breaks.
     |
-    | Do NOT change listing status here.
-    |
-    | Before:
-    |
-    | suspicious/high_risk -> flagged
-    | safe/low_risk -> approved
-    |
-    | That caused automatic status changes.
-    |
-    | Now:
-    |
-    | status remains pending.
-    |
+    */
+
+    if ($mlImageScore !== null) {
+
+        $imageScore =
+            ($imageScore * 0.5) +
+            ($mlImageScore * 0.5);
+
+        $imageScore =
+            max(
+                0,
+                min(
+                    100,
+                    $imageScore
+                )
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Recompute fraud score if ML blending changed the image score
+    |--------------------------------------------------------------------------
+    */
+
+    if ($mlImageScore !== null) {
+
+        $fraudScore = round(
+            ($imageScore * 0.25) +
+            ($priceScore * 0.25) +
+            ($sellerScore * 0.20) +
+            ($textScore * 0.20) +
+            ($policyScore * 0.10),
+            2
+        );
+
+        if ($fraudScore < 30) {
+            $trustStatus = 'safe';
+        } elseif ($fraudScore < 50) {
+            $trustStatus = 'low_risk';
+        } elseif ($fraudScore < 70) {
+            $trustStatus = 'suspicious';
+        } else {
+            $trustStatus = 'high_risk';
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Current status
+    |--------------------------------------------------------------------------
     */
 
     $currentStatus =
@@ -1482,7 +1894,11 @@ function run_fraud_analysis(
         ?? $payload;
 
 
-    if (!is_array($featureSnapshot)) {
+    if (
+        !is_array(
+            $featureSnapshot
+        )
+    ) {
 
         $featureSnapshot =
             $payload;
@@ -1491,11 +1907,7 @@ function run_fraud_analysis(
 
     /*
     |--------------------------------------------------------------------------
-    | Add protected original price
-    |--------------------------------------------------------------------------
-    |
-    | This makes it explicit that AI analysis used the
-    | original seller-entered price.
+    | Price protection
     |--------------------------------------------------------------------------
     */
 
@@ -1512,6 +1924,11 @@ function run_fraud_analysis(
     $featureSnapshot[
         'price_score_is_risk_only'
     ] = true;
+
+
+    $featureSnapshot[
+        'ml_image_score'
+    ] = $mlImageScore;
 
 
     $featureSnapshotJson =
@@ -1548,9 +1965,21 @@ function run_fraud_analysis(
         );
 
 
+    if ($mlImageScore !== null) {
+
+        $explanation .=
+            ' ML-based visual similarity score: ' .
+            number_format(
+                $mlImageScore,
+                2
+            ) .
+            '/100.';
+    }
+
+
     /*
     |--------------------------------------------------------------------------
-    | Model information
+    | Model
     |--------------------------------------------------------------------------
     */
 
@@ -1568,9 +1997,14 @@ function run_fraud_analysis(
         );
 
 
+    if ($mlImageScore !== null) {
+        $modelVersion .= '+resnet50';
+    }
+
+
     /*
     |--------------------------------------------------------------------------
-    | Save fraud analysis
+    | Save analysis
     |--------------------------------------------------------------------------
     */
 
@@ -1581,20 +2015,9 @@ function run_fraud_analysis(
 
         /*
         |--------------------------------------------------------------------------
-        | Update ONLY risk-related fields
-        |--------------------------------------------------------------------------
-        |
-        | Notice:
-        |
-        | price is NOT present here.
-        |
-        | title is NOT present.
-        | description is NOT present.
-        | category is NOT present.
-        | brand is NOT present.
-        | condition is NOT present.
-        |
-        | status is NOT changed.
+        | IMPORTANT:
+        | Price is NOT updated.
+        | Status is NOT updated.
         |--------------------------------------------------------------------------
         */
 
@@ -1666,11 +2089,6 @@ function run_fraud_analysis(
 
             $imageScore,
 
-            /*
-             * This is ONLY the price anomaly/risk score.
-             *
-             * It is NOT the product price.
-             */
             $priceScore,
 
             $sellerScore,
@@ -1693,9 +2111,6 @@ function run_fraud_analysis(
         |--------------------------------------------------------------------------
         | Safety check
         |--------------------------------------------------------------------------
-        |
-        | Verify that original price did not change.
-        |--------------------------------------------------------------------------
         */
 
         $check =
@@ -1715,12 +2130,6 @@ function run_fraud_analysis(
             (float)$check->fetchColumn();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Detect accidental price modification
-        |--------------------------------------------------------------------------
-        */
-
         if (
             abs(
                 $savedPrice -
@@ -1733,12 +2142,6 @@ function run_fraud_analysis(
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Commit
-        |--------------------------------------------------------------------------
-        */
 
         $pdo->commit();
 
@@ -1772,6 +2175,9 @@ function run_fraud_analysis(
         'image_score' =>
             $imageScore,
 
+        'ml_image_score' =>
+            $mlImageScore,
+
         'price_score' =>
             $priceScore,
 
@@ -1796,9 +2202,6 @@ function run_fraud_analysis(
         'feature_snapshot' =>
             $featureSnapshot,
 
-        /*
-         * Explicit protection
-         */
         'original_price' =>
             $originalPrice,
 

@@ -410,7 +410,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Image hash
+        | Image hash (pHash)
         |--------------------------------------------------------------------------
         */
 
@@ -443,6 +443,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
+        | ML image embedding (ResNet50)
+        |--------------------------------------------------------------------------
+        */
+
+        $imageEmbedding = null;
+
+        if (
+            $uploadedAbsolutePath !== null &&
+            is_file($uploadedAbsolutePath)
+        ) {
+
+            try {
+
+                $imageEmbedding = ai_image_embedding(
+                    $uploadedAbsolutePath
+                );
+
+            } catch (Throwable $embeddingException) {
+
+                error_log(
+                    'Image embedding generation failed for listing #' .
+                    $listingId .
+                    ': ' .
+                    $embeddingException->getMessage()
+                );
+
+                $imageEmbedding = null;
+            }
+        }
+
+
+        $imageEmbeddingJson =
+            $imageEmbedding !== null
+                ? json_encode(
+                    $imageEmbedding,
+                    JSON_UNESCAPED_UNICODE |
+                    JSON_UNESCAPED_SLASHES
+                )
+                : null;
+
+
+        /*
+        |--------------------------------------------------------------------------
         | Insert image
         |--------------------------------------------------------------------------
         */
@@ -452,10 +495,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (
                 listing_id,
                 image_path,
-                image_hash
+                image_hash,
+                image_embedding
             )
             VALUES
             (
+                ?,
                 ?,
                 ?,
                 ?
@@ -466,7 +511,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $imageStmt->execute([
             $listingId,
             $imagePath,
-            $imageHash
+            $imageHash,
+            $imageEmbeddingJson
         ]);
 
 

@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import os
@@ -19,6 +18,15 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+
+from model.image_encoder import encode_image
+from image_similarity.embedding import load_image_from_bytes
+from image_similarity.similarity import (
+    classify_similarity,
+    cosine_similarity,
+    similarity_percentage,
+    similarity_to_risk_score,
+)
 
 
 # ============================================================
@@ -76,12 +84,12 @@ PROHIBITED_TERMS = {
 
 app = FastAPI(
     title="RADIUS Explainable Fraud Service",
-    version="2.0.0",
+    version="2.1.0",
 )
 
 
 # ============================================================
-# REQUEST MODEL
+# REQUEST MODELS
 # ============================================================
 
 class AnalyzeRequest(BaseModel):
@@ -105,6 +113,13 @@ class AnalyzeRequest(BaseModel):
     )
 
 
+class ImageCompareRequest(BaseModel):
+    query_embedding: list[float]
+    existing_embeddings: list[dict[str, Any]] = Field(
+        default_factory=list
+    )
+
+
 # ============================================================
 # HEALTH CHECK
 # ============================================================
@@ -114,7 +129,7 @@ def root() -> dict[str, Any]:
     return {
         "service": "RADIUS Explainable Fraud Service",
         "status": "ok",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "price_search": "SerpApi Google Search + ML fallback",
     }
 
@@ -128,7 +143,7 @@ def health() -> dict[str, Any]:
 
 
 # ============================================================
-# IMAGE HASH
+# IMAGE HASH (pHash)
 # ============================================================
 
 @app.post("/hash-image")
@@ -167,7 +182,124 @@ async def hash_image(
 
 
 # ============================================================
-# IMAGE RISK
+# IMAGE EMBEDDING (ML — ResNet50)
+# ============================================================
+
+@app.post("/image-embedding")
+async def image_embedding(
+    image: UploadFile = File(...),
+) -> dict[str, Any]:
+
+    allowed_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+
+    if (
+        image.content_type
+        and image.content_type not in allowed_types
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported image type",
+        )
+
+    try:
+        image_bytes = await image.read()
+
+        opened = load_image_from_bytes(image_bytes)
+
+        embedding = encode_image(opened)
+
+        return {
+            "success": True,
+            "model": "ResNet50",
+            "embedding_dimension": len(embedding),
+            "embedding": embedding,
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not generate image embedding.",
+        ) from exc
+
+
+# ============================================================
+# IMAGE COMPARISON (ML — cosine similarity)
+# ============================================================
+
+@app.post("/compare-image")
+def compare_image(
+    request: ImageCompareRequest,
+) -> dict[str, Any]:
+
+    query = request.query_embedding
+
+    if not query:
+        raise HTTPException(
+            status_code=400,
+            detail="Query embedding is empty.",
+        )
+
+    matches: list[dict[str, Any]] = []
+
+    for item in request.existing_embeddings:
+
+        embedding = item.get("embedding", [])
+
+        if not isinstance(embedding, list) or not embedding:
+            continue
+
+        try:
+            similarity = cosine_similarity(query, embedding)
+        except ValueError:
+            continue
+
+        level, reason = classify_similarity(similarity)
+
+        matches.append(
+            {
+                "listing_id": item.get("listing_id"),
+                "similarity": round(similarity, 6),
+                "similarity_percentage": similarity_percentage(similarity),
+                "risk_score": similarity_to_risk_score(similarity),
+                "level": level,
+                "reason": reason,
+            }
+        )
+
+    matches.sort(key=lambda x: x["similarity"], reverse=True)
+
+    best_match = matches[0] if matches else None
+
+    if best_match is None:
+        return {
+            "success": True,
+            "same_image": False,
+            "best_match": None,
+            "matches": [],
+        }
+
+    same_image = best_match["similarity"] >= 0.95
+
+    return {
+        "success": True,
+        "same_image": same_image,
+        "best_match": best_match,
+        "matches": matches[:10],
+    }
+
+
+# ============================================================
+# IMAGE RISK (pHash — used by /analyze-listing)
 # ============================================================
 
 def hamming(a: str, b: str) -> int:
@@ -1367,7 +1499,7 @@ def analyze(
     p: AnalyzeRequest,
 ) -> dict[str, Any]:
 
-    # IMAGE
+    # IMAGE (pHash only — ML blending happens on the PHP side)
     image_score, image_reason = image_risk(
         p.image_hashes,
         p.existing_image_hashes,
@@ -1545,7 +1677,7 @@ def analyze(
             "RADIUS Explainable Ensemble"
         ),
 
-        "model_version": "2.0",
+        "model_version": "2.1",
 
         "feature_snapshot": p.model_dump(),
     }
