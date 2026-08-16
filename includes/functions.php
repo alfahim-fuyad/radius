@@ -11,7 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 60 * 60 * 24 * 30, // 30 days
         'path' => '/',
-        'secure' => true,                // Render HTTPS
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
@@ -28,7 +28,8 @@ require_once dirname(__DIR__) . '/config/database.php';
 |--------------------------------------------------------------------------
 */
 
-function e(?string $value): string {
+function e(?string $value): string
+{
     return htmlspecialchars(
         (string)$value,
         ENT_QUOTES | ENT_SUBSTITUTE,
@@ -36,46 +37,69 @@ function e(?string $value): string {
     );
 }
 
-function redirect(string $path): never {
+
+function redirect(string $path): never
+{
     header('Location: ' . $path);
     exit;
 }
 
-function flash(string $type, string $message): void {
+
+function flash(string $type, string $message): void
+{
     $_SESSION['flash_' . $type] = $message;
 }
 
-function pull_flash(string $type): ?string {
+
+function pull_flash(string $type): ?string
+{
     $key = 'flash_' . $type;
+
     $v = $_SESSION[$key] ?? null;
+
     unset($_SESSION[$key]);
 
     return $v;
 }
 
-function money(float|int|string $value): string {
+
+function money(float|int|string $value): string
+{
     return '৳' . number_format((float)$value, 0);
 }
 
-function trust_label(string $status): string {
+
+function trust_label(string $status): string
+{
     return [
-        'safe'        => 'Verified',
-        'low_risk'    => 'Under Review',
-        'suspicious'  => 'Suspicious',
-        'high_risk'   => 'Flagged'
+        'safe'       => 'Verified',
+        'low_risk'   => 'Under Review',
+        'suspicious' => 'Suspicious',
+        'high_risk'  => 'Flagged'
     ][$status] ?? 'Unchecked';
 }
 
-function trust_class(string $status): string {
-    return 'trust-' . preg_replace('/[^a-z_]/', '', $status);
+
+function trust_class(string $status): string
+{
+    return 'trust-' . preg_replace(
+        '/[^a-z_]/',
+        '',
+        $status
+    );
 }
 
-function trust_state(string $status): string {
+
+function trust_state(string $status): string
+{
     return match ($status) {
         'safe' => 'verified',
+
         'low_risk' => 'review',
+
         'suspicious',
         'high_risk' => 'danger',
+
         default => 'review'
     };
 }
@@ -87,8 +111,10 @@ function trust_state(string $status): string {
 |--------------------------------------------------------------------------
 */
 
-function radius_visuals(): array {
+function radius_visuals(): array
+{
     return [
+
         'phone' => [
             'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=82',
             'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=82',
@@ -144,17 +170,28 @@ function radius_visuals(): array {
 }
 
 
-function stable_visual_index(string $seed, int $count): int {
+function stable_visual_index(
+    string $seed,
+    int $count
+): int {
+
     if ($count < 1) {
         return 0;
     }
 
-    return abs((int)crc32(strtolower($seed))) % $count;
+    return abs(
+        (int)crc32(
+            strtolower($seed)
+        )
+    ) % $count;
 }
 
 
-function listing_visual(array $listing): string {
-    $uploaded = trim((string)($listing['image_path'] ?? ''));
+function listing_visual(array $listing): string
+{
+    $uploaded = trim(
+        (string)($listing['image_path'] ?? '')
+    );
 
     if ($uploaded !== '') {
         return $uploaded;
@@ -163,13 +200,22 @@ function listing_visual(array $listing): string {
     $all = radius_visuals();
 
     $category = strtolower(
-        (string)($listing['category'] ?? 'accessories')
+        (string)(
+            $listing['category']
+            ?? 'accessories'
+        )
     );
 
-    $images = $all[$category] ?? $all['accessories'];
+    $images =
+        $all[$category]
+        ?? $all['accessories'];
 
     $seed = strtolower(
-        (string)($listing['title'] ?? $listing['id'] ?? $category)
+        (string)(
+            $listing['title']
+            ?? $listing['id']
+            ?? $category
+        )
     );
 
     $index = stable_visual_index(
@@ -180,15 +226,26 @@ function listing_visual(array $listing): string {
     if ($category === 'phone') {
 
         if (str_contains($seed, 'samsung')) {
-            $index = min(3, count($images) - 1);
+
+            $index = min(
+                3,
+                count($images) - 1
+            );
 
         } elseif (
             str_contains($seed, 'urgent') ||
             str_contains($seed, 'pro')
         ) {
-            $index = min(2, count($images) - 1);
 
-        } elseif (str_contains($seed, 'iphone')) {
+            $index = min(
+                2,
+                count($images) - 1
+            );
+
+        } elseif (
+            str_contains($seed, 'iphone')
+        ) {
+
             $index = 0;
         }
     }
@@ -213,16 +270,29 @@ function ai_json(
         return null;
     }
 
-    $ch = curl_init(AI_SERVICE_URL . $path);
+    $ch = curl_init(
+        AI_SERVICE_URL . $path
+    );
 
     curl_setopt_array($ch, [
+
         CURLOPT_RETURNTRANSFER => true,
+
         CURLOPT_POST => true,
+
         CURLOPT_HTTPHEADER => [
             'Content-Type: application/json'
         ],
-        CURLOPT_POSTFIELDS => json_encode($payload),
+
+        CURLOPT_POSTFIELDS =>
+            json_encode(
+                $payload,
+                JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES
+            ),
+
         CURLOPT_CONNECTTIMEOUT => 3,
+
         CURLOPT_TIMEOUT => $timeout
     ]);
 
@@ -242,6 +312,7 @@ function ai_json(
         $code < 200 ||
         $code >= 300
     ) {
+
         error_log(
             'AI request failed: ' .
             $err .
@@ -252,13 +323,20 @@ function ai_json(
         return null;
     }
 
-    $data = json_decode($body, true);
+    $data = json_decode(
+        $body,
+        true
+    );
 
-    return is_array($data) ? $data : null;
+    return is_array($data)
+        ? $data
+        : null;
 }
 
 
-function ai_hash_image(string $absolutePath): ?string {
+function ai_hash_image(
+    string $absolutePath
+): ?string {
 
     if (
         !function_exists('curl_init') ||
@@ -267,7 +345,8 @@ function ai_hash_image(string $absolutePath): ?string {
         return null;
     }
 
-    $mime = mime_content_type($absolutePath)
+    $mime =
+        mime_content_type($absolutePath)
         ?: 'image/jpeg';
 
     $ch = curl_init(
@@ -275,8 +354,11 @@ function ai_hash_image(string $absolutePath): ?string {
     );
 
     curl_setopt_array($ch, [
+
         CURLOPT_RETURNTRANSFER => true,
+
         CURLOPT_POST => true,
+
         CURLOPT_POSTFIELDS => [
             'image' => new CURLFile(
                 $absolutePath,
@@ -284,7 +366,9 @@ function ai_hash_image(string $absolutePath): ?string {
                 basename($absolutePath)
             )
         ],
+
         CURLOPT_CONNECTTIMEOUT => 3,
+
         CURLOPT_TIMEOUT => 12
     ]);
 
@@ -295,6 +379,8 @@ function ai_hash_image(string $absolutePath): ?string {
         CURLINFO_HTTP_CODE
     );
 
+    $err = curl_error($ch);
+
     curl_close($ch);
 
     if (
@@ -302,10 +388,21 @@ function ai_hash_image(string $absolutePath): ?string {
         $code < 200 ||
         $code >= 300
     ) {
+
+        error_log(
+            'AI image hash request failed: ' .
+            $err .
+            ' HTTP ' .
+            $code
+        );
+
         return null;
     }
 
-    $data = json_decode($body, true);
+    $data = json_decode(
+        $body,
+        true
+    );
 
     return is_array($data)
         ? ($data['image_hash'] ?? null)
@@ -319,12 +416,15 @@ function ai_hash_image(string $absolutePath): ?string {
 |--------------------------------------------------------------------------
 */
 
-function validate_listing_upload(array $file): array {
+function validate_listing_upload(
+    array $file
+): array {
 
     if (
         ($file['error'] ?? UPLOAD_ERR_NO_FILE)
         !== UPLOAD_ERR_OK
     ) {
+
         throw new RuntimeException(
             'Please upload a product image.'
         );
@@ -334,6 +434,7 @@ function validate_listing_upload(array $file): array {
         ($file['size'] ?? 0) <= 0 ||
         $file['size'] > MAX_UPLOAD_BYTES
     ) {
+
         throw new RuntimeException(
             'Image exceeds the upload size limit.'
         );
@@ -341,7 +442,16 @@ function validate_listing_upload(array $file): array {
 
     $tmp = $file['tmp_name'];
 
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    if (!is_uploaded_file($tmp)) {
+
+        throw new RuntimeException(
+            'Invalid uploaded image.'
+        );
+    }
+
+    $finfo = new finfo(
+        FILEINFO_MIME_TYPE
+    );
 
     $mime = $finfo->file($tmp);
 
@@ -355,6 +465,7 @@ function validate_listing_upload(array $file): array {
         !isset($allowed[$mime]) ||
         @getimagesize($tmp) === false
     ) {
+
         throw new RuntimeException(
             'Only valid JPG, PNG, or WEBP images are allowed.'
         );
@@ -370,10 +481,16 @@ function validate_listing_upload(array $file): array {
     if (
         !in_array(
             $originalExt,
-            ['jpg', 'jpeg', 'png', 'webp'],
+            [
+                'jpg',
+                'jpeg',
+                'png',
+                'webp'
+            ],
             true
         )
     ) {
+
         throw new RuntimeException(
             'Invalid image extension.'
         );
@@ -386,26 +503,43 @@ function validate_listing_upload(array $file): array {
 }
 
 
-function save_listing_upload(array $file): array {
+function save_listing_upload(
+    array $file
+): array {
 
-    [$mime, $ext] = validate_listing_upload($file);
+    [$mime, $ext] =
+        validate_listing_upload($file);
 
     if (!is_dir(UPLOAD_LISTING_DIR)) {
-        mkdir(
-            UPLOAD_LISTING_DIR,
-            0755,
-            true
-        );
+
+        if (
+            !mkdir(
+                UPLOAD_LISTING_DIR,
+                0755,
+                true
+            ) &&
+            !is_dir(UPLOAD_LISTING_DIR)
+        ) {
+
+            throw new RuntimeException(
+                'Could not create upload directory.'
+            );
+        }
     }
 
     $name =
-        bin2hex(random_bytes(18)) .
+        bin2hex(
+            random_bytes(18)
+        ) .
         '.' .
         $ext;
 
     $dest =
-        UPLOAD_LISTING_DIR .
-        '/' .
+        rtrim(
+            UPLOAD_LISTING_DIR,
+            '/\\'
+        ) .
+        DIRECTORY_SEPARATOR .
         $name;
 
     if (
@@ -414,6 +548,7 @@ function save_listing_upload(array $file): array {
             $dest
         )
     ) {
+
         throw new RuntimeException(
             'Could not save uploaded image.'
         );
@@ -433,22 +568,26 @@ function save_listing_upload(array $file): array {
 |--------------------------------------------------------------------------
 */
 
-function seller_risk_context(int $sellerId): array {
+function seller_risk_context(
+    int $sellerId
+): array {
 
     $pdo = db();
 
     $stmt = $pdo->prepare(
-        "SELECT DATEDIFF(NOW(),created_at)
-         account_age_days
+        "SELECT DATEDIFF(NOW(), created_at)
          FROM users
          WHERE id=?"
     );
 
-    $stmt->execute([$sellerId]);
+    $stmt->execute([
+        $sellerId
+    ]);
 
     $age = (int)(
         $stmt->fetchColumn() ?: 0
     );
+
 
     $q = $pdo->prepare(
         "SELECT COUNT(*)
@@ -456,9 +595,12 @@ function seller_risk_context(int $sellerId): array {
          WHERE user_id=?"
     );
 
-    $q->execute([$sellerId]);
+    $q->execute([
+        $sellerId
+    ]);
 
     $listings = (int)$q->fetchColumn();
+
 
     $q = $pdo->prepare(
         "SELECT COUNT(*)
@@ -468,9 +610,12 @@ function seller_risk_context(int $sellerId): array {
          WHERE l.user_id=?"
     );
 
-    $q->execute([$sellerId]);
+    $q->execute([
+        $sellerId
+    ]);
 
     $reports = (int)$q->fetchColumn();
+
 
     $q = $pdo->prepare(
         "SELECT COUNT(*)
@@ -479,9 +624,12 @@ function seller_risk_context(int $sellerId): array {
          AND status='completed'"
     );
 
-    $q->execute([$sellerId]);
+    $q->execute([
+        $sellerId
+    ]);
 
     $completed = (int)$q->fetchColumn();
+
 
     $q = $pdo->prepare(
         "SELECT COUNT(*)
@@ -490,20 +638,28 @@ function seller_risk_context(int $sellerId): array {
          AND status='removed'"
     );
 
-    $q->execute([$sellerId]);
+    $q->execute([
+        $sellerId
+    ]);
 
     $removed = (int)$q->fetchColumn();
+
 
     $q = $pdo->prepare(
         "SELECT COUNT(*)
          FROM listings
          WHERE user_id=?
-         AND trust_status IN ('suspicious','high_risk')"
+         AND trust_status IN
+         ('suspicious','high_risk')"
     );
 
-    $q->execute([$sellerId]);
+    $q->execute([
+        $sellerId
+    ]);
 
-    $suspicious = (int)$q->fetchColumn();
+    $suspicious =
+        (int)$q->fetchColumn();
+
 
     $q = $pdo->prepare(
         "SELECT COALESCE(AVG(rating),0)
@@ -511,18 +667,36 @@ function seller_risk_context(int $sellerId): array {
          WHERE reviewed_user_id=?"
     );
 
-    $q->execute([$sellerId]);
+    $q->execute([
+        $sellerId
+    ]);
 
-    $rating = (float)$q->fetchColumn();
+    $rating =
+        (float)$q->fetchColumn();
+
 
     return [
-        'account_age_days' => $age,
-        'previous_listings' => $listings,
-        'report_count' => $reports,
-        'completed_trades' => $completed,
-        'removed_listings' => $removed,
-        'suspicious_listings' => $suspicious,
-        'rating_average' => $rating
+
+        'account_age_days' =>
+            $age,
+
+        'previous_listings' =>
+            $listings,
+
+        'report_count' =>
+            $reports,
+
+        'completed_trades' =>
+            $completed,
+
+        'removed_listings' =>
+            $removed,
+
+        'suspicious_listings' =>
+            $suspicious,
+
+        'rating_average' =>
+            $rating
     ];
 }
 
@@ -533,21 +707,28 @@ function seller_risk_context(int $sellerId): array {
 |--------------------------------------------------------------------------
 */
 
-function run_fraud_analysis(int $listingId): ?array {
+function run_fraud_analysis(
+    int $listingId
+): ?array {
 
     $pdo = db();
 
     $stmt = $pdo->prepare(
-        'SELECT * FROM listings WHERE id=?'
+        'SELECT *
+         FROM listings
+         WHERE id=?'
     );
 
-    $stmt->execute([$listingId]);
+    $stmt->execute([
+        $listingId
+    ]);
 
     $listing = $stmt->fetch();
 
     if (!$listing) {
         return null;
     }
+
 
     $h = $pdo->prepare(
         'SELECT image_hash
@@ -556,11 +737,15 @@ function run_fraud_analysis(int $listingId): ?array {
          AND image_hash IS NOT NULL'
     );
 
-    $h->execute([$listingId]);
+    $h->execute([
+        $listingId
+    ]);
 
-    $own = $h->fetchAll(
-        PDO::FETCH_COLUMN
-    );
+    $own =
+        $h->fetchAll(
+            PDO::FETCH_COLUMN
+        );
+
 
     $all = $pdo->prepare(
         'SELECT li.image_hash
@@ -569,11 +754,15 @@ function run_fraud_analysis(int $listingId): ?array {
          AND li.image_hash IS NOT NULL'
     );
 
-    $all->execute([$listingId]);
+    $all->execute([
+        $listingId
+    ]);
 
-    $existingHashes = $all->fetchAll(
-        PDO::FETCH_COLUMN
-    );
+    $existingHashes =
+        $all->fetchAll(
+            PDO::FETCH_COLUMN
+        );
+
 
     $d = $pdo->prepare(
         'SELECT description
@@ -582,26 +771,51 @@ function run_fraud_analysis(int $listingId): ?array {
          LIMIT 200'
     );
 
-    $d->execute([$listingId]);
+    $d->execute([
+        $listingId
+    ]);
 
     $existingDescriptions =
-        $d->fetchAll(PDO::FETCH_COLUMN);
+        $d->fetchAll(
+            PDO::FETCH_COLUMN
+        );
+
 
     $payload = [
-        'title' => $listing['title'],
-        'description' => $listing['description'],
-        'category' => $listing['category'],
-        'brand' => $listing['brand'],
-        'condition' => $listing['item_condition'],
-        'price' => (float)$listing['price'],
+
+        'title' =>
+            $listing['title'],
+
+        'description' =>
+            $listing['description'],
+
+        'category' =>
+            $listing['category'],
+
+        'brand' =>
+            $listing['brand'],
+
+        'condition' =>
+            $listing['item_condition'],
+
+        'price' =>
+            (float)$listing['price'],
+
         'seller_information' =>
             seller_risk_context(
                 (int)$listing['user_id']
             ),
-        'image_hashes' => $own,
-        'existing_image_hashes' => $existingHashes,
-        'existing_descriptions' => $existingDescriptions
+
+        'image_hashes' =>
+            $own,
+
+        'existing_image_hashes' =>
+            $existingHashes,
+
+        'existing_descriptions' =>
+            $existingDescriptions
     ];
+
 
     $result = ai_json(
         '/analyze-listing',
@@ -613,20 +827,73 @@ function run_fraud_analysis(int $listingId): ?array {
         return null;
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validate AI Result
+    |--------------------------------------------------------------------------
+    */
+
+    $trustStatus =
+        (string)(
+            $result['trust_status']
+            ?? 'low_risk'
+        );
+
+    $allowedStatuses = [
+        'safe',
+        'low_risk',
+        'suspicious',
+        'high_risk'
+    ];
+
+    if (
+        !in_array(
+            $trustStatus,
+            $allowedStatuses,
+            true
+        )
+    ) {
+
+        $trustStatus = 'low_risk';
+    }
+
+
+    $fraudScore =
+        max(
+            0,
+            min(
+                100,
+                (float)(
+                    $result['fraud_score']
+                    ?? 0
+                )
+            )
+        );
+
+
+    $moderation =
+        in_array(
+            $trustStatus,
+            [
+                'suspicious',
+                'high_risk'
+            ],
+            true
+        )
+        ? 'flagged'
+        : 'approved';
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save Analysis
+    |--------------------------------------------------------------------------
+    */
+
     $pdo->beginTransaction();
 
     try {
-
-        $status = $result['trust_status'];
-
-        $moderation =
-            in_array(
-                $status,
-                ['suspicious', 'high_risk'],
-                true
-            )
-            ? 'flagged'
-            : 'approved';
 
         $u = $pdo->prepare(
             'UPDATE listings
@@ -639,11 +906,16 @@ function run_fraud_analysis(int $listingId): ?array {
         );
 
         $u->execute([
-            (float)$result['fraud_score'],
-            $status,
+
+            $fraudScore,
+
+            $trustStatus,
+
             $moderation,
+
             $listingId
         ]);
+
 
         $ins = $pdo->prepare(
             'INSERT INTO fraud_predictions
@@ -663,33 +935,67 @@ function run_fraud_analysis(int $listingId): ?array {
             VALUES (?,?,?,?,?,?,?,?,?,?,?)'
         );
 
+
         $ins->execute([
+
             $listingId,
-            $result['fraud_score'],
-            $result['image_score'],
-            $result['price_score'],
-            $result['seller_score'],
-            $result['text_score'],
-            $result['policy_score'],
+
+            $fraudScore,
+
+            (float)(
+                $result['image_score']
+                ?? 0
+            ),
+
+            (float)(
+                $result['price_score']
+                ?? 0
+            ),
+
+            (float)(
+                $result['seller_score']
+                ?? 0
+            ),
+
+            (float)(
+                $result['text_score']
+                ?? 0
+            ),
+
+            (float)(
+                $result['policy_score']
+                ?? 0
+            ),
+
             $result['model_name']
                 ?? 'radius_explainable_ensemble',
+
             $result['model_version']
                 ?? '1.0',
-            $result['explanation'],
+
+            $result['explanation']
+                ?? 'No explanation provided.',
+
             json_encode(
                 $result['feature_snapshot']
-                    ?? $payload
+                    ?? $payload,
+                JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES
             )
         ]);
+
 
         $pdo->commit();
 
     } catch (Throwable $e) {
 
-        $pdo->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
 
         throw $e;
     }
+
 
     return $result;
 }
