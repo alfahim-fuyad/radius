@@ -2,6 +2,7 @@
 
 require_once __DIR__.'/includes/auth.php';
 require_once __DIR__.'/includes/functions.php';
+require_once __DIR__.'/includes/csrf.php';
 
 $u = require_login();
 
@@ -326,70 +327,135 @@ include __DIR__.'/includes/header.php';
     <?php foreach($own as $l): ?>
 
 
-        <a
-            class="card"
-            href="/listing.php?id=<?=$l['id']?>"
-        >
-
-            <div class="product-img placeholder">
-
-                <?php if($l['image_path']): ?>
-
-                    <img
-                        class="product-img"
-                        src="<?=e($l['image_path'])?>"
-                    >
-
-                <?php else: ?>
-
-                    RADIUS
-
-                <?php endif; ?>
-
-            </div>
+        <div class="card">
 
 
-            <div class="card-body">
+            <!-- Product image / View listing -->
 
+            <a
+                href="/listing.php?id=<?=$l['id']?>"
+                style="text-decoration:none;color:inherit"
+            >
 
-                <span
-                    class="badge <?=e(
-                        trust_class(
-                            $l['trust_status'] ?? ''
-                        )
-                    )?>"
-                >
+                <div class="product-img placeholder">
 
-                    <?=e(
-                        trust_label(
-                            $l['trust_status'] ?? ''
-                        )
-                    )?>
+                    <?php if($l['image_path']): ?>
 
-                </span>
+                        <img
+                            class="product-img"
+                            src="<?=e($l['image_path'])?>"
+                            alt="<?=e($l['title'])?>"
+                        >
 
+                    <?php else: ?>
 
-                <h3>
-                    <?=e($l['title'])?>
-                </h3>
+                        RADIUS
 
-
-                <strong>
-                    <?=money($l['price'])?>
-                </strong>
-
-
-                <div class="muted">
-
-                    Status:
-                    <?=e($l['status'])?>
+                    <?php endif; ?>
 
                 </div>
 
 
-            </div>
+                <div class="card-body">
 
-        </a>
+
+                    <span
+                        class="badge <?=e(
+                            trust_class(
+                                $l['trust_status'] ?? ''
+                            )
+                        )?>"
+                    >
+
+                        <?=e(
+                            trust_label(
+                                $l['trust_status'] ?? ''
+                            )
+                        )?>
+
+                    </span>
+
+
+                    <h3>
+                        <?=e($l['title'])?>
+                    </h3>
+
+
+                    <strong>
+                        <?=money($l['price'])?>
+                    </strong>
+
+
+                    <div class="muted">
+
+                        Status:
+                        <?=e($l['status'])?>
+
+                    </div>
+
+
+                </div>
+
+            </a>
+
+
+            <!-- Edit / Delete -->
+
+            <?php if($isOwnProfile): ?>
+
+                <div
+                    class="actions"
+                    style="
+                        padding:0 16px 16px;
+                        display:flex;
+                        gap:8px;
+                    "
+                >
+
+
+                    <!-- Edit -->
+
+                    <a
+                        class="btn btn-sm"
+                        href="/edit-listing.php?id=<?=$l['id']?>"
+                    >
+                        Edit
+                    </a>
+
+
+                    <!-- Delete -->
+
+                    <form
+                        method="post"
+                        action="/delete-listing.php"
+                        style="display:inline"
+                        onsubmit="return confirm('Are you sure you want to delete this listing?');"
+                    >
+
+                        <?=csrf_field()?>
+
+                        <input
+                            type="hidden"
+                            name="id"
+                            value="<?=$l['id']?>"
+                        >
+
+                        <button
+                            type="submit"
+                            class="btn btn-sm"
+                        >
+                            Delete
+                        </button>
+
+                    </form>
+
+
+                </div>
+
+            <?php endif; ?>
+
+
+        </div>
 
 
     <?php endforeach; ?>
