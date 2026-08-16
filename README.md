@@ -5,7 +5,7 @@
 
 **RADIUS — Discover Locally. Trade Securely. Build Trust.**
 
-A secure hyperlocal secondhand marketplace built with PHP, MySQL, and an explainable AI-based fraud-risk analysis service.
+A secure hyperlocal secondhand marketplace built with **PHP, MySQL, and an explainable AI-based fraud-risk analysis service**.
 
 </p>
 
@@ -13,7 +13,7 @@ A secure hyperlocal secondhand marketplace built with PHP, MySQL, and an explain
 
 ## 📌 Overview
 
-**RADIUS** is a CSE479 academic mini-project that implements a secure, hyperlocal secondhand marketplace for buying, selling, chatting, trading, reviewing, and discovering products nearby.
+**RADIUS** is a CSE479 academic mini-project that implements a secure, hyperlocal secondhand marketplace for **buying, selling, chatting, trading, reviewing, and discovering products nearby**.
 
 The project combines a traditional **PHP + MySQL marketplace** with a dedicated **Python/FastAPI AI service** that analyzes listings and generates an explainable **0–100 fraud-risk score**.
 
@@ -25,11 +25,20 @@ Users can:
 - Upload product images
 - Chat privately with buyers and sellers
 - Send and manage trade requests
-- Leave reviews
+- Leave reviews and ratings
 - Report suspicious listings
+- View seller information
 - View trust and risk information
+- Discover products based on location
 
-The AI service analyzes multiple signals including image similarity, price anomaly, seller behavior, text patterns, and policy/brand risks.
+The AI trust system analyzes multiple signals, including:
+
+- Image similarity
+- Price anomaly
+- Seller behavior
+- Text patterns
+- Brand and policy risks
+- Listing characteristics
 
 > ⚠️ **Important:** The AI trust system produces risk signals, not proof of fraud. Suspicious and high-risk listings are intended for human administrator review.
 
@@ -39,6 +48,8 @@ The AI service analyzes multiple signals including image similarity, price anoma
 
 ## 🛍️ Marketplace
 
+RADIUS provides the core functionality required for a secondhand marketplace.
+
 - Browse secondhand products
 - Search listings
 - Category-based marketplace
@@ -47,14 +58,15 @@ The AI service analyzes multiple signals including image similarity, price anoma
 - Listing details
 - Create listings
 - Edit listings
-- Remove listings
+- Delete listings
 - Seller profiles
 - Buyer profiles
 - Product condition information
 - Seller-entered pricing
-- Secure image uploads
+- Product image uploads
 - Product reporting
 - Reviews and ratings
+- Listing status management
 
 ---
 
@@ -66,10 +78,12 @@ Listings can contain:
 
 - Latitude
 - Longitude
-- Location information
+- Location name
 - Distance from the current user
 
 Distance calculations use the **Haversine formula**.
+
+### Location Flow
 
 ```text
 User Location
@@ -87,1442 +101,1065 @@ Distance in KM
 Nearby Listings
 ````
 
+This allows users to discover secondhand products available near their location.
+
 ---
 
-# 💬 Communication
+# 🤖 AI-Based Trust & Fraud Risk Analysis
 
-RADIUS includes a private buyer–seller messaging system.
+One of the main features of RADIUS is its dedicated AI-based trust analysis service.
 
-### Features
+Instead of simply marking a listing as:
+
+```text
+Safe / Fraud
+```
+
+the system generates an explainable **risk score from 0 to 100**.
+
+### Risk Score
+
+|  Score | Risk Level      | Meaning                       |
+| -----: | --------------- | ----------------------------- |
+|   0–20 | 🟢 Low          | Low-risk listing              |
+|  21–40 | 🟢 Moderate-Low | Some minor risk signals       |
+|  41–60 | 🟡 Medium       | Requires additional attention |
+|  61–80 | 🟠 High         | Multiple suspicious signals   |
+| 81–100 | 🔴 Critical     | Strong fraud-risk indicators  |
+
+> The thresholds can be adjusted according to the implementation of the AI service.
+
+---
+
+# 🔍 AI Risk Signals
+
+The AI service evaluates multiple independent signals.
+
+## 1. 💰 Price Anomaly
+
+The system compares the seller's entered price against available reference or market price information.
+
+Example:
+
+```text
+Expected Market Price: ৳50,000
+Seller Price:          ৳12,000
+
+             ↓
+
+Large Price Difference
+
+             ↓
+
+Higher Price-Anomaly Risk
+```
+
+A very unusual price does **not automatically mean fraud**.
+
+It is treated as one signal among multiple signals.
+
+---
+
+## 2. 🖼️ Image Similarity
+
+Product images can be analyzed against reference images or previously analyzed content.
+
+Potential signals include:
+
+* Duplicate images
+* Highly similar images
+* Reused product photographs
+* Suspicious image patterns
+
+### Image Analysis Flow
+
+```text
+Uploaded Product Image
+          │
+          ▼
+Image Processing
+          │
+          ▼
+Similarity Analysis
+          │
+          ▼
+Similarity Score
+          │
+          ▼
+Risk Contribution
+```
+
+---
+
+## 3. 👤 Seller Behavior
+
+The system can consider seller-related signals such as:
+
+* Account activity
+* Listing history
+* Previous reports
+* Review history
+* Seller reputation
+* Transaction behavior
+
+This helps distinguish between a new or unknown seller and a seller with an established history.
+
+---
+
+## 4. 📝 Text Analysis
+
+Listing descriptions and other textual information can be analyzed for suspicious patterns.
+
+Potential indicators include:
+
+* Unrealistic claims
+* Excessive urgency
+* Suspicious wording
+* Repeated promotional patterns
+* Potentially misleading statements
+
+---
+
+## 5. 🏷️ Brand / Policy Risk
+
+Certain listing characteristics may contribute additional risk.
+
+The system can identify potentially suspicious:
+
+* Brand claims
+* Product descriptions
+* Policy violations
+* Restricted or suspicious content
+
+---
+
+# 🧮 Explainable Risk Score
+
+The final risk score is calculated from multiple signals instead of relying on a single prediction.
+
+```text
+                    Listing
+                       │
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+      Price          Image           Text
+     Analysis       Analysis        Analysis
+        │              │              │
+        └──────────────┼──────────────┘
+                       ▼
+               Seller Behavior
+                       │
+                       ▼
+                Policy / Brand
+                    Signals
+                       │
+                       ▼
+              Risk Score Engine
+                       │
+                       ▼
+                 0 – 100 Score
+                       │
+                       ▼
+               Explanation Layer
+                       │
+             ┌─────────┴─────────┐
+             ▼                   ▼
+         Risk Level        Risk Factors
+```
+
+Example:
+
+```text
+Fraud Risk Score: 78/100
+
+Risk Factors:
+• Price significantly below market reference
+• Similar image detected
+• Limited seller history
+• Suspicious listing wording
+```
+
+---
+
+# 🧠 Explainable AI
+
+A major design goal of RADIUS is **explainability**.
+
+Instead of displaying only:
+
+```text
+Fraud Probability: 87%
+```
+
+the system provides understandable reasons behind the risk score.
+
+Example:
+
+```text
+Risk Score: 87/100
+
+Reasons:
+✓ Large price anomaly
+✓ High image similarity
+✓ Suspicious text pattern
+✓ Limited seller history
+```
+
+This makes the AI output easier for:
+
+* Buyers
+* Sellers
+* Administrators
+* Project evaluators
+
+to understand.
+
+---
+
+# 🛡️ Trust System
+
+RADIUS combines AI-generated risk information with marketplace trust mechanisms.
+
+Trust-related features include:
+
+* Seller reviews
+* Buyer reviews
+* Ratings
+* Listing reports
+* Seller history
+* Fraud-risk score
+* Risk explanations
+* Admin moderation
+
+The objective is to help users make **better-informed decisions** rather than blindly trusting an AI prediction.
+
+---
+
+# 💬 Private Messaging
+
+RADIUS includes a private communication system between marketplace users.
+
+Users can:
 
 * Start conversations
 * Send messages
-* Poll for new messages
-* Conversation history
-* Participant-based authorization
-* Unauthorized conversation protection
-* AJAX-based communication
+* View conversations
+* Communicate about listings
+* Discuss prices
+* Arrange trades
+* Negotiate with sellers
 
-Private conversations can only be accessed by authorized participants.
-
----
-
-# 🤝 Trading System
-
-RADIUS supports direct trading between buyers and sellers.
-
-### Trade Features
-
-* Create trade requests
-* Accept trade requests
-* Reject trade requests
-* Cancel trade requests
-* Complete trades
-* Trade-state validation
-* Duplicate trade protection
-* Buyer/seller authorization
-
-### Trade Workflow
+### Messaging Flow
 
 ```text
 Buyer
   │
+  │ Message
   ▼
-View Listing
+Seller
+  │
+  │ Reply
+  ▼
+Conversation
   │
   ▼
-Send Trade Request
-  │
-  ▼
-Seller Receives Request
-  │
-  ├── Reject
-  │
-  └── Accept
-        │
-        ▼
-      Trade
-        │
-        ▼
-   Complete Trade
-        │
-        ▼
-      Review
+Negotiation / Trade
 ```
 
 ---
 
-# 🛡️ Trust & Fraud Detection
+# 🔄 Trade Request System
 
-RADIUS includes an explainable AI-based trust system.
+RADIUS supports product trading in addition to conventional buying.
 
-Every analyzed listing can receive a **0–100 fraud-risk score**.
+Users can send trade requests to other users.
 
-## Risk Components
+A trade request can contain:
 
-| Component              | Weight | Technology                         |
-| ---------------------- | -----: | ---------------------------------- |
-| 🖼️ Image Similarity   |    25% | pHash + Hamming Distance           |
-| 💰 Price Anomaly       |    25% | Random Forest Regressor            |
-| 👤 Seller Risk         |    20% | Account, reports, trades & reviews |
-| 📝 Text Risk           |    20% | TF-IDF + MultinomialNB             |
-| ⚠️ Policy / Brand Risk |    10% | Rule-based analysis                |
+* Sender
+* Receiver
+* Offered listing
+* Requested listing
+* Trade message
+* Request status
 
----
-
-# 📊 Risk Levels
-
-|    Score | Risk Level    |
-| -------: | ------------- |
-|   `0–29` | 🟢 Safe       |
-|  `30–49` | 🟡 Low Risk   |
-|  `50–69` | 🟠 Suspicious |
-| `70–100` | 🔴 High Risk  |
-
-### Example
+### Trade Status
 
 ```text
-Fraud Score = 72
-       │
-       ▼
-High Risk
-       │
-       ▼
-Admin Fraud Queue
-       │
-       ▼
-Human Review
-```
-
-The AI score is a **risk indicator**, not a final fraud verdict.
-
----
-
-# 🖼️ Image Similarity Detection
-
-RADIUS uses **perceptual hashing (pHash)** to detect potentially reused or visually similar listing images.
-
-Unlike normal file hashes, perceptual hashes are designed to represent visual characteristics of an image.
-
-### Image Analysis
-
-```text
-Uploaded Image
-      │
-      ▼
-Image Validation
-      │
-      ▼
-Perceptual Hash
-      │
-      ▼
-Compare Existing Image Hashes
-      │
-      ▼
-Hamming Distance
-      │
-      ▼
-Similarity Risk
-```
-
-### Hamming Distance
-
-```text
-Distance ≤ 5
-→ High Similarity
-
-Distance 6–10
-→ Medium Similarity
-```
-
-> Image similarity is treated as a risk signal and does not automatically prove that an image is fraudulent.
-
----
-
-# 💰 Price Anomaly Detection
-
-The seller's original listing price is preserved.
-
-The AI service receives the original price as a **read-only input** and calculates a price anomaly/risk score.
-
-### Important Design Rule
-
-```text
-Seller-entered price
-        │
-        ▼
-Original price preserved
-        │
-        ▼
-AI receives price
-        │
-        ▼
-Price anomaly analysis
-        │
-        ▼
-Price risk score
-```
-
-The AI does **not** replace the seller's actual product price.
-
-For example:
-
-```text
-Product Price:
-৳50,000
-
-Price Risk Score:
-82/100
-```
-
-The `82` represents **risk**, not the product price.
-
-Therefore:
-
-```text
-Product Price
-      ≠
-Price Risk Score
+Pending
+   │
+   ├── Accepted
+   │
+   ├── Rejected
+   │
+   └── Cancelled
 ```
 
 ---
 
-# 👤 Seller Risk Analysis
+# ⭐ Reviews & Ratings
 
-Seller risk is calculated using multiple account-level signals.
+Users can provide feedback after marketplace interactions.
 
-The system can consider:
+The review system helps establish seller and buyer reputation.
 
-* Account age
-* Number of previous listings
-* Number of reports
-* Completed trades
-* Removed listings
-* Previous suspicious listings
-* Average review rating
+Reviews may include:
 
-Conceptually:
+* Rating
+* Written feedback
+* Reviewer
+* Reviewed user
+* Associated transaction or listing
+
+This contributes to the overall marketplace trust ecosystem.
+
+---
+
+# 🚨 Reporting System
+
+Users can report suspicious or inappropriate listings.
+
+Possible report categories include:
+
+* Suspected fraud
+* Fake product
+* Misleading information
+* Inappropriate content
+* Policy violation
+* Other
+
+### Reporting Flow
 
 ```text
-Account Age
-     +
-Previous Listings
-     +
-Reports
-     +
-Completed Trades
-     +
-Removed Listings
-     +
-Suspicious History
-     +
-Average Rating
+User
+ │
+ ▼
+Suspicious Listing
+ │
+ ▼
+Submit Report
+ │
+ ▼
+Admin Review
+ │
+ ├── No Action
+ │
+ ├── Warning
+ │
+ ├── Listing Removal
+ │
+ └── Further Investigation
+```
+
+---
+
+# 👨‍💼 Admin Dashboard
+
+RADIUS includes administrative functionality for marketplace moderation.
+
+Administrators can manage:
+
+* Users
+* Listings
+* Reports
+* Reviews
+* Suspicious listings
+* Fraud-risk information
+* Marketplace content
+
+The admin system provides human oversight over AI-generated risk signals.
+
+---
+
+# 🔐 Authentication & Authorization
+
+RADIUS uses account-based authentication.
+
+Users can:
+
+* Register
+* Login
+* Logout
+* Maintain sessions
+* Manage their account
+* Access authorized features
+
+### User Roles
+
+```text
+Regular User
      │
-     ▼
-Seller Risk Score
+     ├── Browse
+     ├── Buy
+     ├── Sell
+     ├── Chat
+     ├── Trade
+     └── Review
+
+Administrator
+     │
+     ├── Manage Users
+     ├── Manage Listings
+     ├── Review Reports
+     └── Moderate Platform
 ```
 
 ---
 
-# 📝 Text Risk Analysis
+# 🗄️ Database Architecture
 
-Listing text is analyzed using machine-learning techniques.
+RADIUS uses **MySQL** as its primary relational database.
 
-### Pipeline
+The database stores marketplace data such as:
 
 ```text
-Listing Title
-     +
-Listing Description
-     │
-     ▼
-Text Processing
-     │
-     ▼
-TF-IDF
-     │
-     ▼
-Multinomial Naive Bayes
-     │
-     ▼
-Text Risk Score
+Users
+ │
+ ├── Listings
+ │     └── Listing Images
+ │
+ ├── Messages
+ │     └── Conversations
+ │
+ ├── Trade Requests
+ │
+ ├── Reviews
+ │
+ └── Reports
+
+Listings
+ │
+ └── Fraud Predictions
 ```
 
-The generated text-risk signal is combined with the other fraud-risk components.
+---
+
+# 📊 Main Database Tables
+
+## `users`
+
+Stores user account information.
+
+Typical information includes:
+
+* User ID
+* Name
+* Email
+* Password
+* Role
+* Location
+* Account information
 
 ---
 
-# ⚠️ Policy & Brand Risk
+## `listings`
 
-A rule-based analyzer evaluates potentially risky listing content.
+Stores marketplace products.
 
-Possible signals include:
+Typical fields include:
 
-* Suspicious promotional language
-* Policy violations
-* Risky claims
-* Brand-related concerns
-* Unusual listing patterns
-
-The result contributes to the overall risk score.
+* Listing ID
+* Seller ID
+* Title
+* Description
+* Category
+* Price
+* Condition
+* Latitude
+* Longitude
+* Location
+* Status
+* Created date
 
 ---
 
-# 🤖 Explainable AI
+## `listing_images`
 
-RADIUS is designed to provide more than a simple fraud label.
-
-The AI service can return:
-
-* Fraud score
-* Image score
-* Price score
-* Seller score
-* Text score
-* Policy score
-* Trust status
-* Model name
-* Model version
-* Explanation
-* Feature snapshot
-
-### Explainable Pipeline
+Stores product image information.
 
 ```text
-                         Listing
-                            │
-          ┌─────────────────┼─────────────────┐
-          │                 │                 │
-          ▼                 ▼                 ▼
-       Image              Price             Seller
-        Risk               Risk              Risk
-          │                 │                 │
-          └─────────────────┼─────────────────┘
-                            │
-                            ▼
-                        Text Risk
-                            │
-                            ▼
-                      Policy Risk
-                            │
-                            ▼
-                    Fraud Score 0–100
-                            │
-                            ▼
-                       Explanation
-                            │
-                            ▼
-                    Human Moderation
+Listing
+   │
+   ├── Image 1
+   ├── Image 2
+   ├── Image 3
+   └── ...
 ```
+
+---
+
+## `conversations`
+
+Stores private conversation information between users.
+
+---
+
+## `messages`
+
+Stores individual messages exchanged inside conversations.
+
+---
+
+## `trade_requests`
+
+Stores trade offers and their statuses.
+
+---
+
+## `reviews`
+
+Stores user ratings and reviews.
+
+---
+
+## `reports`
+
+Stores user-submitted reports about suspicious listings or users.
+
+---
+
+## `fraud_predictions`
+
+Stores AI-generated fraud-risk analysis.
+
+Potential information includes:
+
+* Listing ID
+* Risk score
+* Risk level
+* Risk factors
+* Prediction information
+* Analysis timestamp
+
+---
+
+## `price_data`
+
+Stores reference price information used for price-anomaly analysis.
 
 ---
 
 # 🏗️ System Architecture
 
-```text
-                         ┌──────────────────────┐
-                         │      Web Browser     │
-                         │    HTML / CSS / JS   │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │    PHP Application   │
-                         │                      │
-                         │ Marketplace          │
-                         │ Authentication       │
-                         │ Chat                 │
-                         │ Trading              │
-                         │ Reviews              │
-                         │ Administration       │
-                         └───────┬───────┬──────┘
-                                 │       │
-                    ┌────────────┘       └────────────┐
-                    ▼                                 ▼
-             ┌──────────────┐                ┌────────────────┐
-             │    MySQL     │                │  FastAPI AI    │
-             │   Database   │                │ Trust Service  │
-             └──────────────┘                └───────┬────────┘
-                                                     │
-                              ┌──────────────────────┼──────────────────────┐
-                              │                      │                      │
-                              ▼                      ▼                      ▼
-                         Image Risk              Price Risk             Text Risk
-                              │                      │                      │
-                              └──────────────────────┼──────────────────────┘
-                                                     │
-                                                     ▼
-                                              Seller Risk
-                                                     │
-                                                     ▼
-                                             Policy Risk
-                                                     │
-                                                     ▼
-                                           Risk Score 0–100
-                                                     │
-                                                     ▼
-                                           Human Moderation
-```
-
----
-
-# 🧰 Tech Stack
-
-## Main Application
-
-| Technology          | Purpose                   |
-| ------------------- | ------------------------- |
-| PHP 8+              | Backend application       |
-| MySQL               | Relational database       |
-| PDO                 | Database access           |
-| HTML5               | Frontend structure        |
-| CSS3                | UI styling                |
-| Vanilla JavaScript  | Client-side functionality |
-| AJAX                | Message polling           |
-| PHP Sessions        | Authentication            |
-| Prepared Statements | SQL injection protection  |
-
----
-
-## AI Service
-
-| Technology              | Purpose                 |
-| ----------------------- | ----------------------- |
-| Python 3                | AI backend              |
-| FastAPI                 | REST API                |
-| pandas                  | Data processing         |
-| scikit-learn            | Machine learning        |
-| Pillow                  | Image processing        |
-| ImageHash               | Perceptual hashing      |
-| Random Forest Regressor | Price anomaly analysis  |
-| TF-IDF                  | Text feature extraction |
-| MultinomialNB           | Text classification     |
-
----
-
-# 🚫 No Dependencies On
-
-The main RADIUS application does **not** depend on:
-
-* React
-* Vite
-* Node.js
-* Express
-* Socket.io
-* Supabase
-
-The core architecture remains:
+RADIUS follows a multi-component architecture.
 
 ```text
-PHP
- +
-MySQL
- +
-FastAPI
- +
-Python ML
+                    ┌─────────────────────┐
+                    │       User          │
+                    │   Web Browser       │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │     PHP Web App     │
+                    │                     │
+                    │ Marketplace         │
+                    │ Authentication      │
+                    │ Messaging           │
+                    │ Trading             │
+                    │ Reviews             │
+                    │ Reports             │
+                    └───────┬─────┬───────┘
+                            │     │
+                 ┌──────────┘     └──────────┐
+                 ▼                           ▼
+       ┌──────────────────┐       ┌──────────────────┐
+       │      MySQL       │       │ Python / FastAPI │
+       │    Database      │       │    AI Service    │
+       └──────────────────┘       └────────┬─────────┘
+                                           │
+                                           ▼
+                                  ┌──────────────────┐
+                                  │ Risk Analysis    │
+                                  │                  │
+                                  │ Price            │
+                                  │ Image            │
+                                  │ Text             │
+                                  │ Seller           │
+                                  │ Policy / Brand   │
+                                  └──────────────────┘
 ```
 
 ---
 
-# 📁 Project Structure
+# 🔗 PHP ↔ FastAPI Integration
+
+The PHP application communicates with the Python/FastAPI service through HTTP API requests.
+
+### Basic Flow
 
 ```text
-radius/
-│
-├── admin/
-│   ├── dashboard.php
-│   ├── fraud-queue.php
-│   └── ...
-│
-├── api/
-│   ├── chat.php
-│   ├── trade.php
-│   └── fraud.php
-│
-├── assets/
-│   ├── css/
-│   └── js/
-│
-├── config/
-│   ├── config.php
-│   └── database.php
-│
-├── includes/
-│   ├── auth.php
-│   ├── csrf.php
-│   └── functions.php
-│
-├── uploads/
-│   └── listings/
-│
-├── ai_service/
-│   ├── training/
-│   ├── requirements.txt
-│   └── ...
-│
-├── index.php
-├── listings.php
-├── listing.php
-├── create-listing.php
-├── messages.php
-├── chat.php
-├── trade-requests.php
-├── trust-radar.php
-├── database.sql
-├── seed.php
-├── Dockerfile
-├── render.yaml
-├── run.sh
-└── README.md
+PHP Application
+      │
+      │ HTTP Request
+      ▼
+FastAPI AI Service
+      │
+      ▼
+Risk Analysis
+      │
+      ▼
+JSON Response
+      │
+      ▼
+PHP Application
+      │
+      ▼
+Display Risk Information
 ```
 
----
-
-# ⚙️ Installation
-
-## 1. Clone the Repository
-
-```bash
-git clone https://github.com/alfahim-fuyad/radius.git
-cd radius
-```
-
----
-
-## 2. Create the Database
-
-For local MySQL:
-
-```bash
-mysql -u root -p < database.sql
-```
-
-Alternatively, import:
-
-```text
-database.sql
-```
-
-through phpMyAdmin.
-
----
-
-# 🔧 Environment Configuration
-
-Configure the application using environment variables.
-
-### Local Example
-
-```env
-APP_URL=http://localhost:3000
-
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=radius
-DB_USER=root
-DB_PASSWORD=
-
-AI_SERVICE_URL=http://127.0.0.1:8001
-```
-
----
-
-# 🤖 Install AI Dependencies
-
-```bash
-python3 -m pip install -r ai_service/requirements.txt
-```
-
-Windows:
-
-```bash
-py -m pip install -r ai_service/requirements.txt
-```
-
----
-
-# 🌱 Seed Demo Data
-
-Run:
-
-```bash
-php seed.php
-```
-
-This creates demo users and sample marketplace data.
-
----
-
-# ▶️ Run the Application
-
-Run:
-
-```bash
-bash run.sh
-```
-
-The application should be available at:
-
-```text
-http://localhost:3000
-```
-
-FastAPI health check:
-
-```text
-http://127.0.0.1:8001/health
-```
-
----
-
-# 👤 Demo Accounts
-
-After running:
-
-```bash
-php seed.php
-```
-
-the following demo accounts are available:
-
-| Role   | Email                | Password         |
-| ------ | -------------------- | ---------------- |
-| Admin  | `admin@radius.test`  | `RadiusDemo123!` |
-| Seller | `seller@radius.test` | `RadiusDemo123!` |
-| Buyer  | `buyer@radius.test`  | `RadiusDemo123!` |
-| User   | `nadia@radius.test`  | `RadiusDemo123!` |
-
-> ⚠️ These credentials are intended for local/demo use only.
-
----
-
-# 🚀 Deploying to Render
-
-RADIUS includes:
-
-```text
-Dockerfile
-render.yaml
-run.sh
-```
-
-These files allow the PHP marketplace and FastAPI trust service to be deployed together as one Render web service.
-
-The application keeps its existing:
-
-```text
-PHP + MySQL
-```
-
-architecture.
-
-For production database hosting, **Aiven MySQL** can be used as the external database.
-
----
-
-# ☁️ Render Deployment
-
-## Step 1 — Push to GitHub
-
-```bash
-git add .
-git commit -m "Prepare RADIUS for deployment"
-git push origin main
-```
-
----
-
-## Step 2 — Create Render Blueprint
-
-In Render:
-
-```text
-New
-  ↓
-Blueprint
-  ↓
-Select GitHub Repository
-  ↓
-Confirm render.yaml
-```
-
-Render will use the configuration defined in:
-
-```text
-render.yaml
-```
-
----
-
-# 🔐 Render Environment Variables
-
-Configure:
-
-```env
-APP_URL=https://your-app.onrender.com
-
-DB_HOST=your-aiven-host
-DB_PORT=your-aiven-port
-DB_NAME=defaultdb
-DB_USER=your-aiven-user
-DB_PASSWORD=your-aiven-password
-
-DB_SSL_MODE=REQUIRED
-
-AI_SERVICE_URL=http://127.0.0.1:8001
-```
-
-### Important
-
-Do **not** assume that the Aiven MySQL port is always `3306`.
-
-Use the actual port shown by Aiven.
-
----
-
-# 🔒 Aiven MySQL SSL
-
-When using Aiven MySQL:
-
-1. Open your Aiven service.
-2. Download the CA certificate.
-3. Copy the PEM content.
-4. Store it as a secure Render environment variable.
-
-Example:
-
-```env
-DB_SSL_MODE=REQUIRED
-DB_SSL_CA_PEM=-----BEGIN CERTIFICATE-----
-...
------END CERTIFICATE-----
-```
-
-The startup configuration can write the certificate to a temporary file so PHP can verify the Aiven MySQL server certificate.
-
----
-
-# 🗄️ Aiven Database Setup
-
-The local `database.sql` may contain:
-
-```sql
-CREATE DATABASE IF NOT EXISTS radius;
-USE radius;
-```
-
-For Aiven, the database is typically:
-
-```text
-defaultdb
-```
-
-Therefore, import the table/schema definitions into the existing Aiven database.
-
-If required, remove:
-
-```sql
-CREATE DATABASE ...
-USE radius;
-```
-
-before importing.
-
----
-
-# 🔌 API
-
-## FastAPI
-
-### Health Check
-
-```http
-GET /health
-```
-
----
-
-### Image Hash
-
-```http
-POST /hash-image
-```
-
-Used to generate a perceptual hash for an uploaded listing image.
-
----
-
-### Listing Analysis
-
-```http
-POST /analyze-listing
-```
-
-Used to analyze listing information and generate fraud-risk signals.
-
-Example response:
+Example conceptual response:
 
 ```json
 {
-  "fraud_score": 37,
-  "image_score": 20,
-  "price_score": 41,
-  "seller_score": 30,
-  "text_score": 35,
-  "policy_score": 25,
-  "trust_status": "low_risk",
-  "model_name": "radius_explainable_ensemble",
-  "model_version": "1.0",
-  "explanation": "Low overall risk."
+  "risk_score": 78,
+  "risk_level": "high",
+  "factors": [
+    "price_anomaly",
+    "image_similarity",
+    "seller_history"
+  ]
 }
 ```
 
 ---
 
-# 🔌 PHP APIs
+# 🐍 FastAPI AI Service
 
-| Endpoint         | Purpose                       |
-| ---------------- | ----------------------------- |
-| `/api/chat.php`  | Start, send and poll messages |
-| `/api/trade.php` | Manage trade requests         |
-| `/api/fraud.php` | Admin fraud actions           |
+The AI component is implemented separately using **Python and FastAPI**.
 
----
+The separation provides several advantages:
 
-# 🔐 Security
+* Independent AI service
+* Easier model development
+* Easier testing
+* API-based communication
+* Separation of marketplace and AI logic
+* Future model replacement capability
 
-RADIUS implements multiple security measures.
-
-## Authentication
-
-* PHP session authentication
-* `password_hash()`
-* `password_verify()`
-* Secure session cookies
-* Authentication middleware/checks
-* Role-based authorization
+The FastAPI service is responsible for processing listing information and returning structured risk-analysis results.
 
 ---
 
-## Database Security
+# 🧮 Haversine Distance Formula
 
-Database queries use PDO prepared statements.
+RADIUS uses the **Haversine formula** to calculate the approximate distance between two geographic coordinates.
 
-Example:
+The formula is useful for determining how far a listing is from the user's current location.
 
-```php
-$stmt = $pdo->prepare(
-    "SELECT * FROM users WHERE email = ?"
-);
-
-$stmt->execute([$email]);
-```
-
-This helps protect against SQL injection.
-
----
-
-# 🛡️ CSRF Protection
-
-State-changing actions use CSRF protection.
-
-Conceptual workflow:
+Conceptually:
 
 ```text
-Generate CSRF Token
-        ↓
-Store Token in Session
-        ↓
-Send Token With Form
-        ↓
-Validate Token
-        ↓
-Perform Action
-```
-
----
-
-# 🧹 Output Escaping
-
-User-generated content is escaped using:
-
-```php
-htmlspecialchars()
-```
-
-Example:
-
-```php
-echo htmlspecialchars(
-    $title,
-    ENT_QUOTES,
-    'UTF-8'
-);
-```
-
-This reduces the risk of HTML injection and XSS.
-
----
-
-# 🖼️ Secure Image Uploads
-
-Uploaded listing images are validated using:
-
-* File size validation
-* MIME type detection
-* Extension validation
-* Image decoding validation
-* `is_uploaded_file()`
-* `getimagesize()`
-* Randomized filenames
-
-Supported formats:
-
-```text
-JPG
-JPEG
-PNG
-WEBP
-```
-
-Example stored image:
-
-```text
-/uploads/listings/
-cec433563846a3bf36186bd8bd0adad319ae.png
-```
-
----
-
-# 🖼️ Listing Image Storage
-
-Listing images are stored using randomized filenames instead of user-provided filenames.
-
-Example:
-
-```text
-/uploads/listings/
-cec433563846a3bf36186bd8bd0adad319ae.png
-
-/uploads/listings/
-165156e02e1456784253d81dcc816f7ef89a.png
-
-/uploads/listings/
-73cd72daa8d8e58f758325956632ddeb074f.png
-
-/uploads/listings/
-518a9e095f02d7681f09a9ca0f7a48804c4b.png
-
-/uploads/listings/
-5d94355287466590d562cfd50445b1f1ab77.png
-```
-
----
-
-# 💾 Original Price Protection
-
-One of the important design requirements of RADIUS is that **AI analysis must never modify the original listing price**.
-
-The analysis process works like this:
-
-```text
-Seller enters price
-        ↓
-Price saved to database
-        ↓
-AI reads original price
-        ↓
-AI calculates price risk
-        ↓
-Risk score saved
-```
-
-Fraud analysis updates only risk-related fields such as:
-
-```text
-fraud_score
-trust_status
-fraud_checked
-updated_at
-```
-
-It does **not** update:
-
-```text
-price
-title
-description
-category
-brand
-item_condition
-```
-
-A database safety check also verifies that the original price remains unchanged after analysis.
-
----
-
-# 🤖 AI Service Failure Handling
-
-If the FastAPI service is temporarily unavailable, the PHP application handles the failure gracefully.
-
-```text
-PHP Application
+User Coordinates
       │
       ▼
-AI Request
+Listing Coordinates
       │
-      ├── Success
-      │      ↓
-      │   Save Analysis
+      ▼
+Haversine Formula
       │
-      └── Failure
-             ↓
-        Graceful Failure
-             ↓
-        Admin Can Retry
+      ▼
+Distance in Kilometers
 ```
 
-The AI service is therefore not intended to become a single point of failure for basic marketplace functionality.
+This enables the platform to prioritize nearby products.
 
 ---
 
-# 🧪 Test Workflow
+# 📁 Project Structure
 
-A complete user workflow can be tested as follows:
+A simplified project structure is:
 
 ```text
-Guest
-  ↓
-Browse
-  ↓
-Register
-  ↓
-Login
-  ↓
-Create Listing
-  ↓
-Upload Image
-  ↓
-AI Fraud Analysis
-  ↓
-Risk Score Generated
-  ↓
-Listing / Moderation
-  ↓
-View Listing
-  ↓
-Chat
-  ↓
-Trade Request
-  ↓
-Seller Accepts
-  ↓
-Complete Trade
-  ↓
-Review
+RADIUS/
+│
+├── admin/
+│   ├── dashboard.php
+│   ├── users.php
+│   ├── listings.php
+│   └── reports.php
+│
+├── api/
+│   └── ...
+│
+├── assets/
+│   ├── css/
+│   ├── js/
+│   └── images/
+│
+├── uploads/
+│   └── listings/
+│
+├── config/
+│   └── database.php
+│
+├── includes/
+│   ├── auth.php
+│   ├── header.php
+│   ├── footer.php
+│   └── ...
+│
+├── ai-service/
+│   ├── main.py
+│   ├── requirements.txt
+│   └── ...
+│
+├── index.php
+├── listings.php
+├── create-listing.php
+├── listing-details.php
+├── messages.php
+├── trades.php
+├── reviews.php
+├── login.php
+├── register.php
+├── logout.php
+│
+├── database.sql
+├── seed.php
+└── README.md
+```
+
+> The exact structure may vary depending on the current project implementation.
+
+---
+
+# ⚙️ Technology Stack
+
+## Frontend
+
+* HTML5
+* CSS3
+* JavaScript
+* Responsive Web Design
+
+## Backend
+
+* PHP
+* PHP Sessions
+* REST-style API communication
+
+## Database
+
+* MySQL
+* SQL
+* Relational database design
+
+## AI Service
+
+* Python
+* FastAPI
+* Machine Learning / AI-based risk analysis
+* Image analysis
+* Text analysis
+* Price anomaly analysis
+
+## Development Environment
+
+* XAMPP
+* Apache
+* MySQL
+* phpMyAdmin
+* Python
+* Git
+* GitHub
+
+---
+
+# 🚀 Installation & Setup
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/YOUR-USERNAME/YOUR-REPOSITORY.git
+cd YOUR-REPOSITORY
 ```
 
 ---
 
-# 🧪 Additional Test Scenarios
+## 2. Start XAMPP
 
-## Authentication
+Start the following services from XAMPP:
+
+```text
+Apache
+MySQL
+```
+
+---
+
+## 3. Move the Project
+
+Copy the project into the XAMPP web directory:
+
+```text
+C:\xampp\htdocs\
+```
+
+Example:
+
+```text
+C:\xampp\htdocs\RADIUS
+```
+
+---
+
+# 🗄️ Database Setup
+
+## 1. Open phpMyAdmin
+
+Open:
+
+```text
+http://localhost/phpmyadmin
+```
+
+## 2. Create the Database
+
+Create a MySQL database named:
+
+```text
+radius
+```
+
+## 3. Import the SQL File
+
+Import:
+
+```text
+database.sql
+```
+
+The database should create the required tables automatically.
+
+---
+
+# 🔧 Database Configuration
+
+Update the database configuration according to your local environment.
+
+Example:
+
+```php
+$host = "localhost";
+$username = "root";
+$password = "";
+$dbname = "radius";
+
+$conn = new mysqli(
+    $host,
+    $username,
+    $password,
+    $dbname
+);
+```
+
+> Update the credentials if your MySQL configuration is different.
+
+---
+
+# 🐍 AI Service Setup
+
+Navigate to the AI service directory:
+
+```bash
+cd ai-service
+```
+
+Create a virtual environment:
+
+```bash
+python -m venv venv
+```
+
+Activate it on Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Start the FastAPI service:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+The AI service should then be available at:
+
+```text
+http://localhost:8000
+```
+
+FastAPI documentation:
+
+```text
+http://localhost:8000/docs
+```
+
+---
+
+# ▶️ Running the PHP Application
+
+Start Apache and MySQL from XAMPP.
+
+Then open:
+
+```text
+http://localhost/RADIUS/
+```
+
+Depending on your folder name, the URL may be different.
+
+---
+
+# 🔄 Complete Application Flow
+
+The overall RADIUS workflow can be represented as:
+
+```text
+                    User
+                     │
+                     ▼
+               Authentication
+                     │
+                     ▼
+              Browse Listings
+                     │
+            ┌────────┴────────┐
+            ▼                 ▼
+       Search/Filter      Nearby Search
+            │                 │
+            └────────┬────────┘
+                     ▼
+               Listing Details
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+        Chat       Trade      Report
+          │          │          │
+          └──────────┼──────────┘
+                     ▼
+                Trust System
+                     │
+          ┌──────────┴──────────┐
+          ▼                     ▼
+      Reviews             AI Risk Analysis
+                                │
+                    ┌───────────┼───────────┐
+                    ▼           ▼           ▼
+                  Price       Image        Text
+                    │           │           │
+                    └───────────┼───────────┘
+                                ▼
+                          Risk Score
+                                │
+                                ▼
+                         User / Admin
+```
+
+---
+
+# 🔐 Security Considerations
+
+Security is an important component of RADIUS.
+
+The application considers:
+
+* Password hashing
+* Session-based authentication
+* Authorization
+* SQL injection prevention
+* Input validation
+* File upload validation
+* Access control
+* User reporting
+* Admin moderation
+
+For production deployment, additional security hardening should be applied.
+
+---
+
+# 🌐 Deployment
+
+RADIUS can be deployed using a PHP-compatible hosting environment together with a MySQL-compatible database.
+
+The AI service can be deployed separately as a Python/FastAPI service.
+
+### Production Architecture
+
+```text
+                   Internet
+                      │
+          ┌───────────┴───────────┐
+          ▼                       ▼
+   PHP Web Application       FastAPI Service
+          │                       │
+          ▼                       ▼
+       MySQL DB             AI Risk Engine
+          │                       │
+          └───────────┬───────────┘
+                      │
+                      ▼
+                  RADIUS
+```
+
+---
+
+# 🧪 Testing
+
+Testing should cover the major system components.
+
+### Authentication
 
 * Registration
 * Login
 * Logout
 * Invalid credentials
-* Unauthorized access
+* Session handling
+* Authorization
 
-## Listings
+### Marketplace
 
-* Create listing
-* Edit listing
-* Remove listing
-* Invalid image
-* Oversized image
-* Invalid MIME type
-* Missing image
+* Listing creation
+* Listing editing
+* Listing deletion
+* Search
+* Filtering
+* Image uploads
 
-## AI / Fraud
+### Messaging
 
-* Successful AI analysis
-* AI service unavailable
-* AI analysis retry
-* Safe listing
-* Low-risk listing
-* Suspicious listing
-* High-risk listing
-* Image similarity detection
+* Creating conversations
+* Sending messages
+* Receiving messages
+
+### Trading
+
+* Sending trade requests
+* Accepting requests
+* Rejecting requests
+* Cancelling requests
+
+### Reviews
+
+* Creating reviews
+* Rating validation
+* Review display
+
+### AI Service
+
 * Price anomaly detection
-
-## Chat
-
-* Start conversation
-* Send message
-* Poll messages
-* Unauthorized chat access
-
-## Trading
-
-* Create trade request
-* Accept trade
-* Reject trade
-* Cancel trade
-* Complete trade
-* Duplicate trade protection
-* Invalid state transition
-
-## Reviews
-
-* Create review
-* Duplicate review protection
-* Unauthorized review attempt
-
-## Administration
-
-* Fraud queue
-* Manual review
-* Listing moderation
-* Unauthorized admin access
-* Suspicious listing handling
-
----
-
-# 🧠 Fraud Analysis Pipeline
-
-```text
-Listing Created
-      │
-      ▼
-Image Uploaded
-      │
-      ▼
-Image Validation
-      │
-      ▼
-Image Hash
-      │
-      ▼
-Seller Information
-      │
-      ▼
-Existing Image Hashes
-      │
-      ▼
-Existing Listing Descriptions
-      │
-      ▼
-FastAPI AI Service
-      │
-      ├───────────────┐
-      ▼               ▼
-Image Risk        Price Risk
-      │               │
-      └───────┬───────┘
-              │
-              ▼
-         Seller Risk
-              │
-              ▼
-          Text Risk
-              │
-              ▼
-        Policy Risk
-              │
-              ▼
-       Fraud Score 0–100
-              │
-              ▼
-        Trust Status
-              │
-              ▼
-         Explanation
-              │
-              ▼
-        Database
-              │
-              ▼
-      Admin Moderation
-```
-
----
-
-# 🗃️ Database Structure
-
-Major database tables include:
-
-```text
-users
-listings
-listing_images
-reports
-conversations
-messages
-trade_requests
-reviews
-fraud_predictions
-price_data
-```
-
-Conceptual relationship:
-
-```text
-                         Users
-                           │
-            ┌──────────────┼──────────────┐
-            │              │              │
-            ▼              ▼              ▼
-        Listings      Conversations   Trade Requests
-            │              │
-      ┌─────┼─────┐        ▼
-      │     │     │      Messages
-      ▼     ▼     ▼
-   Images Reports Fraud
-                   Predictions
-
-Users ─────────── Reviews
-```
-
----
-
-# 🛡️ Moderation Philosophy
-
-RADIUS intentionally separates **AI risk detection** from **final moderation decisions**.
-
-```text
-AI Prediction
-     ≠
-Fraud Verdict
-```
-
-For example:
-
-```text
-Fraud Score = 82
-       ↓
-High Risk
-       ↓
-Fraud Queue
-       ↓
-Administrator Review
-       ↓
-Final Decision
-```
-
-This approach makes the system more explainable and reduces the risk of treating a machine-learning prediction as definitive proof of fraud.
-
----
-
-# 📊 Trust Radar
-
-The project includes:
-
-```text
-trust-radar.php
-```
-
-The Trust Radar provides a visual representation of major risk dimensions.
-
-Example:
-
-```text
-              Image
-                │
-                │
-        Seller ─┼─ Price
-                │
-                │
-              Text
-                │
-              Policy
-```
-
-This allows administrators to understand which components contributed to the overall risk score.
-
----
-
-# 🌐 Local Development Requirements
-
-Recommended environment:
-
-```text
-PHP 8+
-MySQL 8+
-Python 3+
-PDO MySQL
-cURL
-FileInfo
-GD / Image Processing Support
-```
-
-Check PHP:
-
-```bash
-php -v
-```
-
-Check Python:
-
-```bash
-python --version
-```
-
-Check MySQL:
-
-```bash
-mysql --version
-```
-
----
-
-# 🩺 Troubleshooting
-
-## Database Connection Error
-
-Check:
-
-```env
-DB_HOST
-DB_PORT
-DB_NAME
-DB_USER
-DB_PASSWORD
-```
-
-For local XAMPP MySQL:
-
-```env
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=radius
-DB_USER=root
-DB_PASSWORD=
-```
-
----
-
-## AI Service Not Responding
-
-Open:
-
-```text
-http://127.0.0.1:8001/health
-```
-
-If the health endpoint does not respond, verify that the FastAPI service is running.
-
----
-
-## Uploaded Image Not Showing
-
-If a listing image is missing, check:
-
-```text
-uploads/listings/
-```
-
-Verify:
-
-1. The image file exists.
-2. The database contains the correct `image_path`.
-3. The path starts correctly with `/uploads/listings/`.
-4. The upload directory is accessible.
-5. The filename has not been changed.
-6. The `listing_images` row has the correct `listing_id`.
-7. The image was saved successfully before AI hashing.
-8. The web server is serving the `uploads` directory.
-
-Example:
-
-```text
-Database:
-image_path = /uploads/listings/example.png
-
-File:
-uploads/listings/example.png
-```
-
-Both must point to the same actual file.
-
----
-
-# 🔒 Production Security Checklist
-
-Before deploying to production:
-
-* [ ] Enable HTTPS
-* [ ] Use strong database passwords
-* [ ] Use environment variables for secrets
-* [ ] Enable MySQL SSL
-* [ ] Do not commit `.env`
-* [ ] Do not commit database passwords
-* [ ] Do not commit private certificates
-* [ ] Do not expose API secrets
-* [ ] Change demo account passwords
-* [ ] Disable production debug output
-* [ ] Configure persistent storage for uploaded images
-* [ ] Review admin permissions
-* [ ] Review session configuration
-* [ ] Verify CSRF protection
-* [ ] Verify file-upload validation
-
----
-
-# 📋 Environment Variables
-
-## Local
-
-```env
-APP_URL=http://localhost:3000
-
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=radius
-DB_USER=root
-DB_PASSWORD=
-
-AI_SERVICE_URL=http://127.0.0.1:8001
-
-DB_SSL_MODE=DISABLED
-```
-
-## Production
-
-```env
-APP_URL=https://your-domain.com
-
-DB_HOST=your-mysql-host
-DB_PORT=your-mysql-port
-DB_NAME=defaultdb
-DB_USER=your-mysql-user
-DB_PASSWORD=your-mysql-password
-
-DB_SSL_MODE=REQUIRED
-DB_SSL_CA_PEM=your-ca-certificate
-
-AI_SERVICE_URL=http://127.0.0.1:8001
-```
-
-> ⚠️ Never commit real credentials to GitHub.
-
----
-
-# 🎯 Project Objectives
-
-The main objectives of RADIUS are:
-
-1. Build a secure secondhand marketplace.
-2. Enable hyperlocal product discovery.
-3. Provide buyer–seller communication.
-4. Support direct trading.
-5. Implement reviews and reporting.
-6. Detect potentially risky listings.
-7. Provide explainable AI risk scores.
-8. Support human moderation.
-9. Protect user information and conversations.
-10. Demonstrate PHP–MySQL–Python AI integration.
+* Image similarity analysis
+* Text analysis
+* Seller risk signals
+* Risk score generation
+* Risk explanation
 
 ---
 
@@ -1530,79 +1167,92 @@ The main objectives of RADIUS are:
 
 Possible future improvements include:
 
-* Real-time WebSocket messaging
-* Push notifications
-* Map-based marketplace
-* Advanced geolocation
-* Deep-learning image embeddings
-* Improved image similarity detection
-* More advanced price prediction
-* Larger training datasets
-* Model evaluation dashboard
-* Model monitoring
-* Seller reputation scoring
-* Product recommendation system
-* Marketplace analytics
+* Real-time notifications
+* Real-time messaging using WebSockets
+* More advanced recommendation systems
+* Improved image fraud detection
+* Deep-learning-based image analysis
+* Better price prediction
+* More sophisticated seller reputation scoring
+* Location-based recommendation ranking
 * Mobile application
-* Payment integration
-* Delivery integration
-* Automated notification system
+* Online payment integration
+* Map-based marketplace browsing
+* Automated moderation
+* Improved fraud-detection models
+* Model performance monitoring
+* More extensive fraud datasets
 
 ---
 
-# 🤝 Contribution
+# 🎯 Project Objectives
 
-This project was developed as an academic mini-project.
+The primary objectives of RADIUS are:
 
-To contribute:
+1. Build a functional hyperlocal secondhand marketplace.
+2. Enable users to discover products nearby.
+3. Provide secure communication between buyers and sellers.
+4. Support both buying and trading.
+5. Build a reputation and review system.
+6. Detect suspicious marketplace behavior.
+7. Provide explainable AI-based fraud-risk analysis.
+8. Combine automated risk detection with human moderation.
+9. Demonstrate integration between PHP, MySQL, and Python/FastAPI.
+10. Provide a practical academic implementation of AI-assisted marketplace security.
 
-```bash
-git clone https://github.com/alfahim-fuyad/radius.git
-cd radius
-```
+---
 
-Create a feature branch:
+# 📚 Academic Context
 
-```bash
-git checkout -b feature/your-feature
-```
+**Course:** CSE479
+**Project Type:** Academic Mini Project
+**Project Name:** RADIUS — Hyperlocal Secondhand Marketplace
 
-Make your changes and commit:
+### Core Technologies
 
-```bash
-git add .
-git commit -m "Add your feature"
-```
-
-Push:
-
-```bash
-git push origin feature/your-feature
+```text
+PHP
+MySQL
+Python
+FastAPI
+JavaScript
+HTML
+CSS
+Machine Learning / AI
 ```
 
 ---
 
-# 🎓 Academic Information
+# ⚠️ Disclaimer
 
-| Information      | Details                                    |
-| ---------------- | ------------------------------------------ |
-| Project          | RADIUS — Hyperlocal Secondhand Marketplace |
-| Course           | CSE479 Mini Project                        |
-| Application Type | Web-based Marketplace                      |
-| Backend          | PHP                                        |
-| Database         | MySQL                                      |
-| AI Service       | Python + FastAPI                           |
-| Machine Learning | scikit-learn                               |
-| Image Analysis   | ImageHash + Pillow                         |
-| Frontend         | HTML + CSS + JavaScript                    |
+RADIUS is an **academic project** developed for educational and demonstration purposes.
+
+The AI-based fraud-risk score is an assistive signal and should **not be treated as definitive proof of fraud**.
+
+A high-risk score indicates that a listing contains multiple suspicious signals and may require further investigation.
+
+Final decisions should involve appropriate human review.
+
+---
+
+# 👥 Contributors
+
+Add your project members here:
+
+```text
+1. Your Name
+2. Member Name
+3. Member Name
+4. Member Name
+```
 
 ---
 
 # 📄 License
 
-This project was developed as a **CSE479 academic mini-project**.
+This project was developed for academic and educational purposes.
 
-The project is intended primarily for educational and demonstration purposes.
+If you plan to publish or reuse this project, update this section with the appropriate license.
 
 ---
 
@@ -1610,65 +1260,7 @@ The project is intended primarily for educational and demonstration purposes.
 
 <p align="center">
 
-### Discover Locally. Trade Securely. Build Trust.
+**Discover Locally. Trade Securely. Build Trust.**
 
 </p>
-
-```text
-              RADIUS
-                │
-     ┌──────────┼──────────┐
-     │          │          │
-     ▼          ▼          ▼
- Discover     Trade       Chat
- Locally     Securely    Privately
-     │          │          │
-     └──────────┼──────────┘
-                │
-                ▼
-          AI Trust Layer
-                │
-                ▼
-        Explainable Risk
-                │
-                ▼
-        Human Moderation
-                │
-                ▼
-             TRUST
-```
-
----
-
-## 🚀 Project Summary
-
-**RADIUS** brings together:
-
-```text
-PHP
-+
-MySQL
-+
-FastAPI
-+
-Machine Learning
-+
-Image Similarity
-+
-Hyperlocal Discovery
-+
-Chat
-+
-Trading
-+
-Reviews
-+
-Human Moderation
-```
-
-to create a secure and explainable secondhand marketplace.
-
-> **RADIUS — Discover Locally. Trade Securely. Build Trust.**
-
-```
 ```
