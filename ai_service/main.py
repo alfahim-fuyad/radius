@@ -99,15 +99,19 @@ class AnalyzeRequest(BaseModel):
     brand: str = ""
     condition: str
     price: float = Field(gt=0)
+
     seller_information: dict[str, Any] = Field(
         default_factory=dict
     )
+
     image_hashes: list[str] = Field(
         default_factory=list
     )
+
     existing_image_hashes: list[str] = Field(
         default_factory=list
     )
+
     existing_descriptions: list[str] = Field(
         default_factory=list
     )
@@ -115,6 +119,7 @@ class AnalyzeRequest(BaseModel):
 
 class ImageCompareRequest(BaseModel):
     query_embedding: list[float]
+
     existing_embeddings: list[dict[str, Any]] = Field(
         default_factory=list
     )
@@ -131,6 +136,8 @@ def root() -> dict[str, Any]:
         "status": "ok",
         "version": "2.1.0",
         "price_search": "SerpApi Google Search + ML fallback",
+        "image_model": "ResNet50",
+        "image_embedding_dimension": 2048,
     }
 
 
@@ -139,11 +146,14 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "serpapi_configured": bool(SERPAPI_KEY),
+        "image_model": "ResNet50",
+        "version": "2.1.0",
     }
 
 
 # ============================================================
-# IMAGE HASH (pHash)
+# IMAGE HASH
+# pHash = perceptual image hash
 # ============================================================
 
 @app.post("/hash-image")
@@ -168,6 +178,7 @@ async def hash_image(
 
     try:
         opened = Image.open(image.file).convert("RGB")
+
         digest = imagehash.phash(opened)
 
     except Exception as exc:
@@ -182,7 +193,9 @@ async def hash_image(
 
 
 # ============================================================
-# IMAGE EMBEDDING (ML — ResNet50)
+# IMAGE EMBEDDING
+# ML = ResNet50
+# Output = 2048 dimensional visual feature vector
 # ============================================================
 
 @app.post("/image-embedding")
@@ -208,9 +221,16 @@ async def image_embedding(
     try:
         image_bytes = await image.read()
 
-        opened = load_image_from_bytes(image_bytes)
+        if not image_bytes:
+            raise ValueError("Empty image file.")
 
-        embedding = encode_image(opened)
+        opened = load_image_from_bytes(
+            image_bytes
+        )
+
+        embedding = encode_image(
+            opened
+        )
 
         return {
             "success": True,
@@ -228,12 +248,15 @@ async def image_embedding(
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail="Could not generate image embedding.",
+            detail=(
+                "Could not generate image embedding."
+            ),
         ) from exc
 
 
 # ============================================================
-# IMAGE COMPARISON (ML — cosine similarity)
+# IMAGE COMPARISON
+# ML = cosine similarity
 # ============================================================
 
 @app.post("/compare-image")
@@ -253,32 +276,64 @@ def compare_image(
 
     for item in request.existing_embeddings:
 
-        embedding = item.get("embedding", [])
+        embedding = item.get(
+            "embedding",
+            []
+        )
 
-        if not isinstance(embedding, list) or not embedding:
+        if (
+            not isinstance(embedding, list)
+            or not embedding
+        ):
             continue
 
         try:
-            similarity = cosine_similarity(query, embedding)
+            similarity = cosine_similarity(
+                query,
+                embedding
+            )
+
         except ValueError:
             continue
 
-        level, reason = classify_similarity(similarity)
+        level, reason = classify_similarity(
+            similarity
+        )
 
         matches.append(
             {
-                "listing_id": item.get("listing_id"),
-                "similarity": round(similarity, 6),
-                "similarity_percentage": similarity_percentage(similarity),
-                "risk_score": similarity_to_risk_score(similarity),
+                "listing_id": item.get(
+                    "listing_id"
+                ),
+                "similarity": round(
+                    similarity,
+                    6
+                ),
+                "similarity_percentage": (
+                    similarity_percentage(
+                        similarity
+                    )
+                ),
+                "risk_score": (
+                    similarity_to_risk_score(
+                        similarity
+                    )
+                ),
                 "level": level,
                 "reason": reason,
             }
         )
 
-    matches.sort(key=lambda x: x["similarity"], reverse=True)
+    matches.sort(
+        key=lambda x: x["similarity"],
+        reverse=True
+    )
 
-    best_match = matches[0] if matches else None
+    best_match = (
+        matches[0]
+        if matches
+        else None
+    )
 
     if best_match is None:
         return {
@@ -288,7 +343,9 @@ def compare_image(
             "matches": [],
         }
 
-    same_image = best_match["similarity"] >= 0.95
+    same_image = (
+        best_match["similarity"] >= 0.95
+    )
 
     return {
         "success": True,
@@ -299,18 +356,36 @@ def compare_image(
 
 
 # ============================================================
-# IMAGE RISK (pHash — used by /analyze-listing)
+# pHASH HAMMING DISTANCE
 # ============================================================
 
-def hamming(a: str, b: str) -> int:
+def hamming(
+    a: str,
+    b: str,
+) -> int:
+
     try:
         return (
             int(a, 16) ^ int(b, 16)
         ).bit_count()
 
-    except (TypeError, ValueError):
+    except (
+        TypeError,
+        ValueError
+    ):
         return 999
 
+
+# ============================================================
+# IMAGE RISK
+#
+# Used by /analyze-listing
+#
+# IMPORTANT:
+# This part uses pHash.
+# ResNet50 similarity is available separately through
+# /image-embedding + /compare-image.
+# ============================================================
 
 def image_risk(
     own: list[str],
@@ -330,6 +405,7 @@ def image_risk(
     )
 
     if nearest <= IMAGE_HIGH_MAX:
+
         return (
             95.0,
             (
@@ -339,11 +415,12 @@ def image_risk(
         )
 
     if nearest <= IMAGE_MEDIUM_MAX:
+
         return (
             60.0,
             (
-                "Uploaded image is visually similar to "
-                "an existing listing "
+                "Uploaded image is visually similar "
+                "to an existing listing "
                 f"(hash distance {nearest})."
             ),
         )
@@ -358,19 +435,28 @@ def image_risk(
 
 
 # ============================================================
-# OLD ML PRICE MODEL
+# PRICE MODEL
 # FALLBACK ONLY
+#
+# Primary source:
+# SerpApi Google search
+#
+# Fallback:
+# RandomForest trained on CSV
 # ============================================================
 
 @lru_cache(maxsize=1)
 def price_model() -> Pipeline:
 
     if not PRICE_CSV.exists():
+
         raise FileNotFoundError(
             f"Price dataset not found: {PRICE_CSV}"
         )
 
-    df = pd.read_csv(PRICE_CSV)
+    df = pd.read_csv(
+        PRICE_CSV
+    )
 
     required_columns = {
         "category",
@@ -379,12 +465,18 @@ def price_model() -> Pipeline:
         "price",
     }
 
-    missing = required_columns - set(df.columns)
+    missing = (
+        required_columns
+        - set(df.columns)
+    )
 
     if missing:
+
         raise ValueError(
             "Price dataset is missing columns: "
-            + ", ".join(sorted(missing))
+            + ", ".join(
+                sorted(missing)
+            )
         )
 
     features = [
@@ -409,6 +501,7 @@ def price_model() -> Pipeline:
                     ]
                 ),
             ),
+
             (
                 "rf",
                 RandomForestRegressor(
@@ -440,7 +533,10 @@ def ml_market_price(
                 [
                     {
                         "category": category,
-                        "brand": brand or "generic",
+                        "brand": (
+                            brand
+                            or "generic"
+                        ),
                         "condition": condition,
                     }
                 ]
@@ -448,11 +544,14 @@ def ml_market_price(
         )[0]
     )
 
-    return max(expected, 1.0)
+    return max(
+        expected,
+        1.0
+    )
 
 
 # ============================================================
-# SEARCH QUERY BUILDER
+# PRICE SEARCH QUERY
 # ============================================================
 
 def build_price_search_query(
@@ -462,18 +561,28 @@ def build_price_search_query(
     condition: str,
 ) -> str:
 
-    parts = []
+    parts: list[str] = []
 
     if brand:
-        parts.append(brand)
+        parts.append(
+            brand
+        )
 
     if title:
-        parts.append(title)
+        parts.append(
+            title
+        )
 
     if category:
-        parts.append(category)
+        parts.append(
+            category
+        )
 
-    condition_lower = condition.lower().strip()
+    condition_lower = (
+        condition
+        .lower()
+        .strip()
+    )
 
     if condition_lower in {
         "used",
@@ -482,7 +591,10 @@ def build_price_search_query(
         "fair",
         "poor",
     }:
-        parts.append("used")
+
+        parts.append(
+            "used"
+        )
 
     parts.extend(
         [
@@ -500,23 +612,37 @@ def build_price_search_query(
 
 
 # ============================================================
-# NUMBER / PRICE EXTRACTION
+# NUMBER NORMALIZATION
 # ============================================================
 
-def normalize_number(value: str) -> float | None:
+def normalize_number(
+    value: str,
+) -> float | None:
 
     if not value:
         return None
 
-    text = value.strip().lower()
+    text = (
+        value
+        .strip()
+        .lower()
+    )
 
-    text = text.replace(",", "")
-    text = text.replace(" ", "")
+    text = text.replace(
+        ",",
+        ""
+    )
+
+    text = text.replace(
+        " ",
+        ""
+    )
 
     multiplier = 1.0
 
     match = re.search(
-        r"(\d+(?:\.\d+)?)\s*(k|thousand|lakh|lac|crore)?",
+        r"(\d+(?:\.\d+)?)\s*"
+        r"(k|thousand|lakh|lac|crore)?",
         text,
     )
 
@@ -524,8 +650,13 @@ def normalize_number(value: str) -> float | None:
         return None
 
     try:
-        number = float(match.group(1))
+
+        number = float(
+            match.group(1)
+        )
+
     except ValueError:
+
         return None
 
     suffix = match.group(2)
@@ -536,13 +667,19 @@ def normalize_number(value: str) -> float | None:
     elif suffix == "thousand":
         multiplier = 1_000
 
-    elif suffix in {"lakh", "lac"}:
+    elif suffix in {
+        "lakh",
+        "lac",
+    }:
         multiplier = 100_000
 
     elif suffix == "crore":
         multiplier = 10_000_000
 
-    result = number * multiplier
+    result = (
+        number
+        * multiplier
+    )
 
     if result <= 0:
         return None
@@ -553,25 +690,41 @@ def normalize_number(value: str) -> float | None:
     return result
 
 
-def extract_prices(text: str) -> list[float]:
+# ============================================================
+# PRICE EXTRACTION
+# ============================================================
+
+def extract_prices(
+    text: str,
+) -> list[float]:
 
     if not text:
         return []
 
-    text = str(text)
+    text = str(
+        text
+    )
 
     patterns = [
+
+        # BDT 50,000
         r"(?:bdt|৳|tk\.?|taka)\s*"
         r"(\d[\d,]*(?:\.\d+)?)",
 
+        # 50,000 BDT
         r"(\d[\d,]*(?:\.\d+)?)\s*"
         r"(?:bdt|৳|tk\.?|taka)",
 
+        # INR
         r"(?:rs\.?|₹)\s*"
         r"(\d[\d,]*(?:\.\d+)?)",
 
-        r"\b(\d{1,3}(?:,\d{3})+(?:\.\d+)?)\b",
+        # comma formatted numbers
+        r"\b(\d{1,3}"
+        r"(?:,\d{3})+"
+        r"(?:\.\d+)?)\b",
 
+        # large plain numbers
         r"\b(\d{5,7})\b",
     ]
 
@@ -587,28 +740,42 @@ def extract_prices(text: str) -> list[float]:
 
         for match in matches:
 
-            value = normalize_number(str(match))
+            value = normalize_number(
+                str(match)
+            )
 
             if value is None:
                 continue
 
-            if 100 <= value <= 10_000_000:
-                prices.append(value)
+            if (
+                100
+                <= value
+                <= 10_000_000
+            ):
+                prices.append(
+                    value
+                )
 
-    unique_prices = []
+    unique_prices: list[float] = []
 
     for price in prices:
 
-        rounded = round(price, 2)
+        rounded = round(
+            price,
+            2
+        )
 
         if rounded not in unique_prices:
-            unique_prices.append(rounded)
+
+            unique_prices.append(
+                rounded
+            )
 
     return unique_prices
 
 
 # ============================================================
-# SERPAPI GOOGLE SEARCH
+# SERPAPI SEARCH
 # ============================================================
 
 def serpapi_search(
@@ -640,7 +807,10 @@ def serpapi_search(
 
         data = response.json()
 
-        if not isinstance(data, dict):
+        if not isinstance(
+            data,
+            dict
+        ):
             return None
 
         if data.get("error"):
@@ -652,6 +822,7 @@ def serpapi_search(
         requests.RequestException,
         ValueError,
     ):
+
         return None
 
 
@@ -676,14 +847,21 @@ def relevance_score(
     )
 
     for word in title_words:
-        if len(word) >= 3 and word in text:
+
+        if (
+            len(word) >= 3
+            and word in text
+        ):
+
             score += 2
 
     if category:
+
         if category.lower() in text:
             score += 3
 
     if brand:
+
         if brand.lower() in text:
             score += 4
 
@@ -697,6 +875,7 @@ def relevance_score(
             "taka",
         ]
     ):
+
         score += 2
 
     if any(
@@ -707,6 +886,7 @@ def relevance_score(
             "bd",
         ]
     ):
+
         score += 2
 
     return score
@@ -730,9 +910,12 @@ def live_market_price(
         condition=condition,
     )
 
-    data = serpapi_search(query)
+    data = serpapi_search(
+        query
+    )
 
     if not data:
+
         return {
             "success": False,
             "price": None,
@@ -741,11 +924,14 @@ def live_market_price(
             "title": None,
             "url": None,
             "reason": (
-                "Live Google price search was unavailable."
+                "Live Google price search "
+                "was unavailable."
             ),
         }
 
-    candidates: list[dict[str, Any]] = []
+    candidates: list[
+        dict[str, Any]
+    ] = []
 
     # ========================================================
     # SHOPPING RESULTS
@@ -756,23 +942,38 @@ def live_market_price(
         [],
     )
 
-    if isinstance(shopping_results, list):
+    if isinstance(
+        shopping_results,
+        list
+    ):
 
         for result in shopping_results:
 
-            if not isinstance(result, dict):
+            if not isinstance(
+                result,
+                dict
+            ):
                 continue
 
             result_title = str(
-                result.get("title", "")
+                result.get(
+                    "title",
+                    ""
+                )
             )
 
             snippet = str(
-                result.get("snippet", "")
+                result.get(
+                    "snippet",
+                    ""
+                )
             )
 
             price_text = str(
-                result.get("price", "")
+                result.get(
+                    "price",
+                    ""
+                )
             )
 
             combined = (
@@ -783,7 +984,9 @@ def live_market_price(
                 + price_text
             )
 
-            prices = extract_prices(combined)
+            prices = extract_prices(
+                combined
+            )
 
             if not prices:
                 continue
@@ -816,7 +1019,7 @@ def live_market_price(
             )
 
     # ========================================================
-    # ORGANIC GOOGLE RESULTS
+    # ORGANIC RESULTS
     # ========================================================
 
     organic_results = data.get(
@@ -824,19 +1027,31 @@ def live_market_price(
         [],
     )
 
-    if isinstance(organic_results, list):
+    if isinstance(
+        organic_results,
+        list
+    ):
 
         for result in organic_results:
 
-            if not isinstance(result, dict):
+            if not isinstance(
+                result,
+                dict
+            ):
                 continue
 
             result_title = str(
-                result.get("title", "")
+                result.get(
+                    "title",
+                    ""
+                )
             )
 
             snippet = str(
-                result.get("snippet", "")
+                result.get(
+                    "snippet",
+                    ""
+                )
             )
 
             rich_snippet = result.get(
@@ -846,8 +1061,9 @@ def live_market_price(
 
             if not isinstance(
                 rich_snippet,
-                dict,
+                dict
             ):
+
                 rich_snippet = {}
 
             combined = (
@@ -855,10 +1071,14 @@ def live_market_price(
                 + " "
                 + snippet
                 + " "
-                + str(rich_snippet)
+                + str(
+                    rich_snippet
+                )
             )
 
-            prices = extract_prices(combined)
+            prices = extract_prices(
+                combined
+            )
 
             if not prices:
                 continue
@@ -891,7 +1111,7 @@ def live_market_price(
             )
 
     # ========================================================
-    # NO PRICE FOUND
+    # NO PRICE
     # ========================================================
 
     if not candidates:
@@ -904,13 +1124,14 @@ def live_market_price(
             "title": None,
             "url": None,
             "reason": (
-                "Google search completed, but "
-                "no usable market price was found."
+                "Google search completed, "
+                "but no usable market price "
+                "was found."
             ),
         }
 
     # ========================================================
-    # SELECT BEST RELEVANT RESULT
+    # BEST RESULT
     # ========================================================
 
     candidates.sort(
@@ -922,19 +1143,22 @@ def live_market_price(
 
     return {
         "success": True,
-        "price": float(best["price"]),
+        "price": float(
+            best["price"]
+        ),
         "query": query,
         "source": best["source"],
         "title": best["title"],
         "url": best["url"],
         "reason": (
-            "Live market price found from Google search."
+            "Live market price found "
+            "from Google search."
         ),
     }
 
 
 # ============================================================
-# PRICE RISK
+# PRICE SCORE
 # ============================================================
 
 def calculate_price_score(
@@ -945,7 +1169,9 @@ def calculate_price_score(
     if market <= 0:
         return 0.0
 
-    ratio = actual / market
+    ratio = (
+        actual / market
+    )
 
     if ratio < 0.35:
         return 95.0
@@ -971,6 +1197,10 @@ def calculate_price_score(
     return 18.0
 
 
+# ============================================================
+# PRICE RISK
+# ============================================================
+
 def price_risk(
     title: str,
     category: str,
@@ -991,19 +1221,31 @@ def price_risk(
         condition=condition,
     )
 
-    if live["success"] and live["price"]:
+    # ========================================================
+    # LIVE GOOGLE PRICE
+    # ========================================================
 
-        expected = float(live["price"])
+    if (
+        live["success"]
+        and live["price"]
+    ):
+
+        expected = float(
+            live["price"]
+        )
 
         score = calculate_price_score(
             actual=actual,
             market=expected,
         )
 
-        difference = actual - expected
+        difference = (
+            actual - expected
+        )
 
         percentage = (
-            difference / expected
+            difference
+            / expected
         ) * 100
 
         direction = (
@@ -1015,11 +1257,14 @@ def price_risk(
         )
 
         reason = (
-            f"Live Google market price is about "
-            f"BDT {expected:,.0f}; listing price is "
+            "Live Google market price "
+            f"is about BDT {expected:,.0f}; "
+            f"listing price is "
             f"BDT {actual:,.0f}. "
-            f"The listing is {abs(percentage):.1f}% "
-            f"{direction} than the reference price."
+            f"The listing is "
+            f"{abs(percentage):.1f}% "
+            f"{direction} than the "
+            "reference price."
         )
 
         details = {
@@ -1034,10 +1279,18 @@ def price_risk(
                 percentage,
                 2,
             ),
-            "search_query": live["query"],
-            "source": live["source"],
-            "source_title": live["title"],
-            "source_url": live["url"],
+            "search_query": live[
+                "query"
+            ],
+            "source": live[
+                "source"
+            ],
+            "source_title": live[
+                "title"
+            ],
+            "source_url": live[
+                "url"
+            ],
         }
 
         return (
@@ -1048,7 +1301,7 @@ def price_risk(
         )
 
     # ========================================================
-    # CSV / ML FALLBACK
+    # ML FALLBACK
     # ========================================================
 
     try:
@@ -1064,11 +1317,23 @@ def price_risk(
             market=expected,
         )
 
+        difference = (
+            actual - expected
+        )
+
+        difference_percent = (
+            difference
+            / expected
+        ) * 100
+
         reason = (
-            "Live Google price was unavailable. "
-            f"Fallback estimated market price is "
-            f"about BDT {expected:,.0f}; "
-            f"listing price is BDT {actual:,.0f}."
+            "Live Google price was "
+            "unavailable. "
+            f"Fallback estimated market "
+            f"price is about "
+            f"BDT {expected:,.0f}; "
+            f"listing price is "
+            f"BDT {actual:,.0f}."
         )
 
         details = {
@@ -1076,15 +1341,19 @@ def price_risk(
             "market_price": expected,
             "listing_price": actual,
             "difference": round(
-                actual - expected,
+                difference,
                 2,
             ),
             "difference_percent": round(
-                ((actual - expected) / expected) * 100,
+                difference_percent,
                 2,
             ),
-            "search_query": live.get("query"),
-            "source": "market_prices_expanded.csv",
+            "search_query": live.get(
+                "query"
+            ),
+            "source": (
+                "market_prices_expanded.csv"
+            ),
             "source_title": None,
             "source_url": None,
         }
@@ -1102,8 +1371,9 @@ def price_risk(
             0.0,
             actual,
             (
-                "Market price could not be determined "
-                "from Google search or fallback data."
+                "Market price could not "
+                "be determined from Google "
+                "search or fallback data."
             ),
             {
                 "source_type": "unavailable",
@@ -1111,7 +1381,9 @@ def price_risk(
                 "listing_price": actual,
                 "difference": None,
                 "difference_percent": None,
-                "search_query": live.get("query"),
+                "search_query": live.get(
+                    "query"
+                ),
                 "source": None,
                 "source_title": None,
                 "source_url": None,
@@ -1121,17 +1393,22 @@ def price_risk(
 
 # ============================================================
 # TEXT MODEL
+# TF-IDF + Multinomial Naive Bayes
 # ============================================================
 
 @lru_cache(maxsize=1)
 def text_model() -> Pipeline:
 
     if not FRAUD_CSV.exists():
+
         raise FileNotFoundError(
-            f"Fraud dataset not found: {FRAUD_CSV}"
+            f"Fraud dataset not found: "
+            f"{FRAUD_CSV}"
         )
 
-    df = pd.read_csv(FRAUD_CSV)
+    df = pd.read_csv(
+        FRAUD_CSV
+    )
 
     required_columns = {
         "title",
@@ -1139,12 +1416,19 @@ def text_model() -> Pipeline:
         "label",
     }
 
-    missing = required_columns - set(df.columns)
+    missing = (
+        required_columns
+        - set(df.columns)
+    )
 
     if missing:
+
         raise ValueError(
-            "Fraud dataset is missing columns: "
-            + ", ".join(sorted(missing))
+            "Fraud dataset is missing "
+            "columns: "
+            + ", ".join(
+                sorted(missing)
+            )
         )
 
     model = Pipeline(
@@ -1156,6 +1440,7 @@ def text_model() -> Pipeline:
                     min_df=1,
                 ),
             ),
+
             (
                 "nb",
                 MultinomialNB(),
@@ -1164,9 +1449,11 @@ def text_model() -> Pipeline:
     )
 
     text = (
-        df["title"].fillna("")
+        df["title"]
+        .fillna("")
         + " "
-        + df["description"].fillna("")
+        + df["description"]
+        .fillna("")
     )
 
     model.fit(
@@ -1200,13 +1487,18 @@ def _similarity(
         )
     )
 
-    return len(
-        wa & wb
-    ) / max(
-        len(wa | wb),
-        1,
+    return (
+        len(wa & wb)
+        / max(
+            len(wa | wb),
+            1
+        )
     )
 
+
+# ============================================================
+# TEXT RISK
+# ============================================================
 
 def text_risk(
     title: str,
@@ -1219,6 +1511,10 @@ def text_risk(
         .lower()
         .strip()
     )
+
+    # --------------------------------------------------------
+    # ML probability
+    # --------------------------------------------------------
 
     try:
 
@@ -1245,40 +1541,60 @@ def text_risk(
             )
 
         else:
+
             suspicious_prob = 0.0
 
     except Exception:
 
         suspicious_prob = 0.0
 
+    # --------------------------------------------------------
+    # Text reuse
+    # --------------------------------------------------------
+
     reused = any(
         _similarity(
             text,
             x.lower(),
         ) >= 0.92
+
         for x in existing
+
         if x
     )
+
+    # --------------------------------------------------------
+    # Final text score
+    # --------------------------------------------------------
 
     score = min(
         100.0,
         suspicious_prob * 100
-        + (25 if reused else 0),
+        + (
+            25
+            if reused
+            else 0
+        ),
     )
 
     reason = (
         "TF-IDF/Naive Bayes "
-        f"suspicious-text probability is "
-        f"{suspicious_prob:.0%}."
+        "suspicious-text probability "
+        f"is {suspicious_prob:.0%}."
     )
 
     if reused:
+
         reason += (
-            " Listing text is also highly "
-            "similar to an existing description."
+            " Listing text is also "
+            "highly similar to an "
+            "existing description."
         )
 
-    return score, reason
+    return (
+        score,
+        reason
+    )
 
 
 # ============================================================
@@ -1290,9 +1606,15 @@ def seller_risk(
 ) -> tuple[float, str]:
 
     score = 0.0
-    reasons = []
+
+    reasons: list[str] = []
+
+    # --------------------------------------------------------
+    # Account age
+    # --------------------------------------------------------
 
     try:
+
         account_age = int(
             s.get(
                 "account_age_days",
@@ -1300,14 +1622,28 @@ def seller_risk(
             )
             or 0
         )
-    except (TypeError, ValueError):
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
         account_age = 0
 
     if account_age < 7:
+
         score += 28
-        reasons.append("new account")
+
+        reasons.append(
+            "new account"
+        )
+
+    # --------------------------------------------------------
+    # Reports
+    # --------------------------------------------------------
 
     try:
+
         reports = int(
             s.get(
                 "report_count",
@@ -1315,15 +1651,25 @@ def seller_risk(
             )
             or 0
         )
-    except (TypeError, ValueError):
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
         reports = 0
 
     score += min(
         30,
-        reports * 10,
+        reports * 10
     )
 
+    # --------------------------------------------------------
+    # Removed listings
+    # --------------------------------------------------------
+
     try:
+
         removed = int(
             s.get(
                 "removed_listings",
@@ -1331,15 +1677,25 @@ def seller_risk(
             )
             or 0
         )
-    except (TypeError, ValueError):
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
         removed = 0
 
     score += min(
         25,
-        removed * 12,
+        removed * 12
     )
 
+    # --------------------------------------------------------
+    # Suspicious listings
+    # --------------------------------------------------------
+
     try:
+
         suspicious = int(
             s.get(
                 "suspicious_listings",
@@ -1347,15 +1703,25 @@ def seller_risk(
             )
             or 0
         )
-    except (TypeError, ValueError):
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
         suspicious = 0
 
     score += min(
         20,
-        suspicious * 7,
+        suspicious * 7
     )
 
+    # --------------------------------------------------------
+    # Positive history
+    # --------------------------------------------------------
+
     try:
+
         completed = int(
             s.get(
                 "completed_trades",
@@ -1363,10 +1729,16 @@ def seller_risk(
             )
             or 0
         )
-    except (TypeError, ValueError):
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
         completed = 0
 
     try:
+
         rating = float(
             s.get(
                 "rating_average",
@@ -1374,18 +1746,31 @@ def seller_risk(
             )
             or 0
         )
-    except (TypeError, ValueError):
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
         rating = 0.0
 
-    if completed >= 5 and rating >= 4:
+    if (
+        completed >= 5
+        and rating >= 4
+    ):
+
         score -= 18
+
         reasons.append(
             "positive completed-trade history"
         )
 
     score = max(
         0.0,
-        min(100.0, score),
+        min(
+            100.0,
+            score
+        )
     )
 
     return (
@@ -1394,7 +1779,10 @@ def seller_risk(
         + (
             ", ".join(reasons)
             if reasons
-            else "no strong historical risk signal"
+            else (
+                "no strong historical "
+                "risk signal"
+            )
         )
         + ".",
     )
@@ -1415,6 +1803,10 @@ def policy_risk(
         .lower()
     )
 
+    # --------------------------------------------------------
+    # Banned / prohibited phrases
+    # --------------------------------------------------------
+
     hits = [
         x
         for x in (
@@ -1424,6 +1816,10 @@ def policy_risk(
         if x in text
     ]
 
+    # --------------------------------------------------------
+    # Brand mismatch
+    # --------------------------------------------------------
+
     mismatch = False
 
     known = {
@@ -1432,10 +1828,12 @@ def policy_risk(
             "ipad",
             "macbook",
         ],
+
         "samsung": [
             "galaxy",
             "samsung",
         ],
+
         "dell": [
             "xps",
             "latitude",
@@ -1455,37 +1853,50 @@ def policy_risk(
     if (
         brand
         and mentioned
-        and brand.lower() not in mentioned
+        and brand.lower()
+        not in mentioned
     ):
+
         mismatch = True
 
     score = min(
         100,
         len(hits) * 30
-        + (35 if mismatch else 0),
+        + (
+            35
+            if mismatch
+            else 0
+        ),
     )
 
-    reasons = []
+    reasons: list[str] = []
 
     if hits:
+
         reasons.append(
             "policy/off-platform phrases: "
-            + ", ".join(hits[:3])
+            + ", ".join(
+                hits[:3]
+            )
         )
 
     if mismatch:
+
         reasons.append(
-            "brand field conflicts with "
-            "recognizable product wording"
+            "brand field conflicts "
+            "with recognizable "
+            "product wording"
         )
 
     return (
         float(score),
-        "; ".join(reasons)
+        "; ".join(
+            reasons
+        )
         if reasons
         else (
-            "No major policy or brand "
-            "mismatch signal."
+            "No major policy or "
+            "brand mismatch signal."
         ),
     )
 
@@ -1499,13 +1910,19 @@ def analyze(
     p: AnalyzeRequest,
 ) -> dict[str, Any]:
 
-    # IMAGE (pHash only — ML blending happens on the PHP side)
+    # ========================================================
+    # IMAGE
+    # ========================================================
+
     image_score, image_reason = image_risk(
         p.image_hashes,
         p.existing_image_hashes,
     )
 
+    # ========================================================
     # PRICE
+    # ========================================================
+
     (
         price_score,
         expected,
@@ -1519,19 +1936,28 @@ def analyze(
         actual=p.price,
     )
 
+    # ========================================================
     # SELLER
+    # ========================================================
+
     seller_score, seller_reason = seller_risk(
         p.seller_information
     )
 
+    # ========================================================
     # TEXT
+    # ========================================================
+
     text_score, text_reason = text_risk(
         p.title,
         p.description,
         p.existing_descriptions,
     )
 
+    # ========================================================
     # POLICY
+    # ========================================================
+
     policy_score, policy_reason = policy_risk(
         p.title,
         p.description,
@@ -1539,7 +1965,13 @@ def analyze(
     )
 
     # ========================================================
-    # FINAL FRAUD RATING
+    # FINAL FRAUD SCORE
+    #
+    # Image  = 25%
+    # Price  = 25%
+    # Seller = 20%
+    # Text   = 20%
+    # Policy = 10%
     # ========================================================
 
     total = round(
@@ -1556,15 +1988,19 @@ def analyze(
     # ========================================================
 
     if total < 30:
+
         status = "safe"
 
     elif total < 50:
+
         status = "low_risk"
 
     elif total < 70:
+
         status = "suspicious"
 
     else:
+
         status = "high_risk"
 
     # ========================================================
@@ -1572,23 +2008,42 @@ def analyze(
     # ========================================================
 
     scored_reasons = [
-        (image_score, image_reason),
-        (price_score, price_reason),
-        (seller_score, seller_reason),
-        (text_score, text_reason),
-        (policy_score, policy_reason),
+        (
+            image_score,
+            image_reason,
+        ),
+        (
+            price_score,
+            price_reason,
+        ),
+        (
+            seller_score,
+            seller_reason,
+        ),
+        (
+            text_score,
+            text_reason,
+        ),
+        (
+            policy_score,
+            policy_reason,
+        ),
     ]
 
     reasons = [
         reason
-        for score, reason in scored_reasons
+        for score, reason
+        in scored_reasons
         if score >= 30
     ]
 
     explanation = (
         " ".join(reasons)
         if reasons
-        else "No strong fraud indicators were detected."
+        else (
+            "No strong fraud "
+            "indicators were detected."
+        )
     )
 
     # ========================================================
@@ -1596,9 +2051,18 @@ def analyze(
     # ========================================================
 
     return {
+
+        # ----------------------------------------------------
+        # Overall result
+        # ----------------------------------------------------
+
         "fraud_score": total,
 
         "trust_status": status,
+
+        # ----------------------------------------------------
+        # Individual risk scores
+        # ----------------------------------------------------
 
         "image_score": round(
             image_score,
@@ -1625,34 +2089,53 @@ def analyze(
             2,
         ),
 
+        # ----------------------------------------------------
+        # Market price
+        # ----------------------------------------------------
+
         "estimated_market_price": (
-            round(expected, 2)
+            round(
+                expected,
+                2,
+            )
             if expected
             else None
         ),
 
-        "price_source": price_details.get(
-            "source_type"
+        "price_source": (
+            price_details.get(
+                "source_type"
+            )
         ),
 
-        "price_search_query": price_details.get(
-            "search_query"
+        "price_search_query": (
+            price_details.get(
+                "search_query"
+            )
         ),
 
-        "price_source_name": price_details.get(
-            "source"
+        "price_source_name": (
+            price_details.get(
+                "source"
+            )
         ),
 
-        "price_source_title": price_details.get(
-            "source_title"
+        "price_source_title": (
+            price_details.get(
+                "source_title"
+            )
         ),
 
-        "price_source_url": price_details.get(
-            "source_url"
+        "price_source_url": (
+            price_details.get(
+                "source_url"
+            )
         ),
 
-        "price_difference": price_details.get(
-            "difference"
+        "price_difference": (
+            price_details.get(
+                "difference"
+            )
         ),
 
         "price_difference_percent": (
@@ -1661,17 +2144,38 @@ def analyze(
             )
         ),
 
+        # ----------------------------------------------------
+        # Explanation
+        # ----------------------------------------------------
+
         "explanation": explanation,
 
+        # ----------------------------------------------------
+        # Individual signals
+        # ----------------------------------------------------
+
         "signals": {
+
             "image": image_reason,
+
             "price": price_reason,
+
             "seller": seller_reason,
+
             "text": text_reason,
+
             "policy": policy_reason,
         },
 
+        # ----------------------------------------------------
+        # Complete price details
+        # ----------------------------------------------------
+
         "price_details": price_details,
+
+        # ----------------------------------------------------
+        # Model information
+        # ----------------------------------------------------
 
         "model_name": (
             "RADIUS Explainable Ensemble"
@@ -1679,5 +2183,11 @@ def analyze(
 
         "model_version": "2.1",
 
-        "feature_snapshot": p.model_dump(),
+        # ----------------------------------------------------
+        # Input snapshot
+        # ----------------------------------------------------
+
+        "feature_snapshot": (
+            p.model_dump()
+        ),
     }
