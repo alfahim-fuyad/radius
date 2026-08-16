@@ -1,4 +1,3 @@
-````markdown
 # RADIUS — Hyperlocal Secondhand Marketplace
 
 <p align="center">
@@ -17,28 +16,19 @@ A secure hyperlocal secondhand marketplace built with **PHP, MySQL, and an expla
 
 The project combines a traditional **PHP + MySQL marketplace** with a dedicated **Python/FastAPI AI service** that analyzes listings and generates an explainable **0–100 fraud-risk score**.
 
-Users can:
+RADIUS is designed to make local secondhand trading safer by combining:
 
-- Browse nearby secondhand products
-- Search and filter listings
-- Create and manage listings
-- Upload product images
-- Chat privately with buyers and sellers
-- Send and manage trade requests
-- Leave reviews and ratings
-- Report suspicious listings
-- View seller information
-- View trust and risk information
-- Discover products based on location
-
-The AI trust system analyzes multiple signals, including:
-
-- Image similarity
-- Price anomaly
-- Seller behavior
-- Text patterns
-- Brand and policy risks
-- Listing characteristics
+- Hyperlocal product discovery
+- User authentication
+- Marketplace listings
+- Private messaging
+- Trade requests
+- Reviews and ratings
+- User reporting
+- AI-based fraud-risk analysis
+- Location-based discovery
+- External search/market information through SerpAPI
+- Human administrator moderation
 
 > ⚠️ **Important:** The AI trust system produces risk signals, not proof of fraud. Suspicious and high-risk listings are intended for human administrator review.
 
@@ -78,7 +68,7 @@ Listings can contain:
 
 - Latitude
 - Longitude
-- Location name
+- Location information
 - Distance from the current user
 
 Distance calculations use the **Haversine formula**.
@@ -99,15 +89,15 @@ Distance in KM
       │
       ▼
 Nearby Listings
-````
+```
 
-This allows users to discover secondhand products available near their location.
+This allows users to discover secondhand products available near their current location.
 
 ---
 
 # 🤖 AI-Based Trust & Fraud Risk Analysis
 
-One of the main features of RADIUS is its dedicated AI-based trust analysis service.
+One of the main features of RADIUS is its dedicated **AI-based trust analysis service**.
 
 Instead of simply marking a listing as:
 
@@ -119,15 +109,15 @@ the system generates an explainable **risk score from 0 to 100**.
 
 ### Risk Score
 
-|  Score | Risk Level      | Meaning                       |
-| -----: | --------------- | ----------------------------- |
-|   0–20 | 🟢 Low          | Low-risk listing              |
-|  21–40 | 🟢 Moderate-Low | Some minor risk signals       |
-|  41–60 | 🟡 Medium       | Requires additional attention |
-|  61–80 | 🟠 High         | Multiple suspicious signals   |
-| 81–100 | 🔴 Critical     | Strong fraud-risk indicators  |
+| Score | Risk Level | Meaning |
+|---:|---|---|
+| 0–20 | 🟢 Low | Low-risk listing |
+| 21–40 | 🟢 Moderate-Low | Some minor risk signals |
+| 41–60 | 🟡 Medium | Requires additional attention |
+| 61–80 | 🟠 High | Multiple suspicious signals |
+| 81–100 | 🔴 Critical | Strong fraud-risk indicators |
 
-> The thresholds can be adjusted according to the implementation of the AI service.
+> The exact thresholds can be adjusted according to the implementation of the AI service.
 
 ---
 
@@ -139,7 +129,7 @@ The AI service evaluates multiple independent signals.
 
 The system compares the seller's entered price against available reference or market price information.
 
-Example:
+### Example
 
 ```text
 Expected Market Price: ৳50,000
@@ -166,10 +156,10 @@ Product images can be analyzed against reference images or previously analyzed c
 
 Potential signals include:
 
-* Duplicate images
-* Highly similar images
-* Reused product photographs
-* Suspicious image patterns
+- Duplicate images
+- Highly similar images
+- Reused product photographs
+- Suspicious image patterns
 
 ### Image Analysis Flow
 
@@ -195,12 +185,12 @@ Risk Contribution
 
 The system can consider seller-related signals such as:
 
-* Account activity
-* Listing history
-* Previous reports
-* Review history
-* Seller reputation
-* Transaction behavior
+- Account activity
+- Listing history
+- Previous reports
+- Review history
+- Seller reputation
+- Transaction behavior
 
 This helps distinguish between a new or unknown seller and a seller with an established history.
 
@@ -212,11 +202,11 @@ Listing descriptions and other textual information can be analyzed for suspiciou
 
 Potential indicators include:
 
-* Unrealistic claims
-* Excessive urgency
-* Suspicious wording
-* Repeated promotional patterns
-* Potentially misleading statements
+- Unrealistic claims
+- Excessive urgency
+- Suspicious wording
+- Repeated promotional patterns
+- Potentially misleading statements
 
 ---
 
@@ -226,10 +216,10 @@ Certain listing characteristics may contribute additional risk.
 
 The system can identify potentially suspicious:
 
-* Brand claims
-* Product descriptions
-* Policy violations
-* Restricted or suspicious content
+- Brand claims
+- Product descriptions
+- Policy violations
+- Restricted or suspicious content
 
 ---
 
@@ -267,7 +257,7 @@ The final risk score is calculated from multiple signals instead of relying on a
          Risk Level        Risk Factors
 ```
 
-Example:
+### Example
 
 ```text
 Fraud Risk Score: 78/100
@@ -293,7 +283,7 @@ Fraud Probability: 87%
 
 the system provides understandable reasons behind the risk score.
 
-Example:
+### Example
 
 ```text
 Risk Score: 87/100
@@ -307,10 +297,10 @@ Reasons:
 
 This makes the AI output easier for:
 
-* Buyers
-* Sellers
-* Administrators
-* Project evaluators
+- Buyers
+- Sellers
+- Administrators
+- Project evaluators
 
 to understand.
 
@@ -322,14 +312,14 @@ RADIUS combines AI-generated risk information with marketplace trust mechanisms.
 
 Trust-related features include:
 
-* Seller reviews
-* Buyer reviews
-* Ratings
-* Listing reports
-* Seller history
-* Fraud-risk score
-* Risk explanations
-* Admin moderation
+- Seller reviews
+- Buyer reviews
+- Ratings
+- Listing reports
+- Seller history
+- Fraud-risk score
+- Risk explanations
+- Admin moderation
 
 The objective is to help users make **better-informed decisions** rather than blindly trusting an AI prediction.
 
@@ -341,13 +331,13 @@ RADIUS includes a private communication system between marketplace users.
 
 Users can:
 
-* Start conversations
-* Send messages
-* View conversations
-* Communicate about listings
-* Discuss prices
-* Arrange trades
-* Negotiate with sellers
+- Start conversations
+- Send messages
+- View conversations
+- Communicate about listings
+- Discuss prices
+- Arrange trades
+- Negotiate with sellers
 
 ### Messaging Flow
 
@@ -376,12 +366,12 @@ Users can send trade requests to other users.
 
 A trade request can contain:
 
-* Sender
-* Receiver
-* Offered listing
-* Requested listing
-* Trade message
-* Request status
+- Sender
+- Receiver
+- Offered listing
+- Requested listing
+- Trade message
+- Request status
 
 ### Trade Status
 
@@ -405,11 +395,11 @@ The review system helps establish seller and buyer reputation.
 
 Reviews may include:
 
-* Rating
-* Written feedback
-* Reviewer
-* Reviewed user
-* Associated transaction or listing
+- Rating
+- Written feedback
+- Reviewer
+- Reviewed user
+- Associated transaction or listing
 
 This contributes to the overall marketplace trust ecosystem.
 
@@ -421,12 +411,12 @@ Users can report suspicious or inappropriate listings.
 
 Possible report categories include:
 
-* Suspected fraud
-* Fake product
-* Misleading information
-* Inappropriate content
-* Policy violation
-* Other
+- Suspected fraud
+- Fake product
+- Misleading information
+- Inappropriate content
+- Policy violation
+- Other
 
 ### Reporting Flow
 
@@ -459,13 +449,13 @@ RADIUS includes administrative functionality for marketplace moderation.
 
 Administrators can manage:
 
-* Users
-* Listings
-* Reports
-* Reviews
-* Suspicious listings
-* Fraud-risk information
-* Marketplace content
+- Users
+- Listings
+- Reports
+- Reviews
+- Suspicious listings
+- Fraud-risk information
+- Marketplace content
 
 The admin system provides human oversight over AI-generated risk signals.
 
@@ -477,12 +467,12 @@ RADIUS uses account-based authentication.
 
 Users can:
 
-* Register
-* Login
-* Logout
-* Maintain sessions
-* Manage their account
-* Access authorized features
+- Register
+- Login
+- Logout
+- Maintain sessions
+- Manage their account
+- Access authorized features
 
 ### User Roles
 
@@ -508,7 +498,7 @@ Administrator
 
 # 🗄️ Database Architecture
 
-RADIUS uses **MySQL** as its primary relational database.
+RADIUS uses **Aiven MySQL** as its cloud-hosted relational database.
 
 The database stores marketplace data such as:
 
@@ -542,13 +532,13 @@ Stores user account information.
 
 Typical information includes:
 
-* User ID
-* Name
-* Email
-* Password
-* Role
-* Location
-* Account information
+- User ID
+- Name
+- Email
+- Password
+- Role
+- Location
+- Account information
 
 ---
 
@@ -558,18 +548,18 @@ Stores marketplace products.
 
 Typical fields include:
 
-* Listing ID
-* Seller ID
-* Title
-* Description
-* Category
-* Price
-* Condition
-* Latitude
-* Longitude
-* Location
-* Status
-* Created date
+- Listing ID
+- Seller ID
+- Title
+- Description
+- Category
+- Price
+- Condition
+- Latitude
+- Longitude
+- Location
+- Status
+- Created date
 
 ---
 
@@ -624,12 +614,12 @@ Stores AI-generated fraud-risk analysis.
 
 Potential information includes:
 
-* Listing ID
-* Risk score
-* Risk level
-* Risk factors
-* Prediction information
-* Analysis timestamp
+- Listing ID
+- Risk score
+- Risk level
+- Risk factors
+- Prediction information
+- Analysis timestamp
 
 ---
 
@@ -646,7 +636,7 @@ RADIUS follows a multi-component architecture.
 ```text
                     ┌─────────────────────┐
                     │       User          │
-                    │   Web Browser       │
+                    │    Web Browser      │
                     └──────────┬──────────┘
                                │
                                ▼
@@ -664,13 +654,13 @@ RADIUS follows a multi-component architecture.
                  ┌──────────┘     └──────────┐
                  ▼                           ▼
        ┌──────────────────┐       ┌──────────────────┐
-       │      MySQL       │       │ Python / FastAPI │
+       │   Aiven MySQL    │       │ Python / FastAPI │
        │    Database      │       │    AI Service    │
        └──────────────────┘       └────────┬─────────┘
                                            │
                                            ▼
                                   ┌──────────────────┐
-                                  │ Risk Analysis    │
+                                  │   Risk Analysis  │
                                   │                  │
                                   │ Price            │
                                   │ Image            │
@@ -708,7 +698,7 @@ PHP Application
 Display Risk Information
 ```
 
-Example conceptual response:
+### Example API Response
 
 ```json
 {
@@ -724,45 +714,504 @@ Example conceptual response:
 
 ---
 
-# 🐍 FastAPI AI Service
+# 🔎 SerpAPI Integration
 
-The AI component is implemented separately using **Python and FastAPI**.
+RADIUS can use **SerpAPI** as an external search API for obtaining product and market-related information.
 
-The separation provides several advantages:
+The returned information can be used as an additional reference signal for features such as:
 
-* Independent AI service
-* Easier model development
-* Easier testing
-* API-based communication
-* Separation of marketplace and AI logic
-* Future model replacement capability
+- Product information
+- Market price reference
+- Search-based product comparison
+- Price anomaly analysis
 
-The FastAPI service is responsible for processing listing information and returning structured risk-analysis results.
+### SerpAPI Flow
+
+```text
+RADIUS Application
+        │
+        │ API Request
+        ▼
+     SerpAPI
+        │
+        ▼
+ Search Results
+        │
+        ▼
+RADIUS Application
+        │
+        ▼
+Market / Product Information
+        │
+        ▼
+Price / Trust Analysis
+```
+
+The SerpAPI key should be stored securely as an environment variable.
+
+```text
+SERPAPI_KEY=your_api_key
+```
+
+> ⚠️ Never commit your actual API key to GitHub.
 
 ---
 
-# 🧮 Haversine Distance Formula
+# 🧑‍💻 Development & Deployment Flow
 
-RADIUS uses the **Haversine formula** to calculate the approximate distance between two geographic coordinates.
-
-The formula is useful for determining how far a listing is from the user's current location.
-
-Conceptually:
+RADIUS follows a complete development, version-control, deployment, database, AI, and external API integration workflow.
 
 ```text
-User Coordinates
-      │
-      ▼
-Listing Coordinates
-      │
-      ▼
-Haversine Formula
-      │
-      ▼
-Distance in Kilometers
+                         👨‍💻 Developer
+                              │
+                              ▼
+                     ┌─────────────────┐
+                     │     VS Code     │
+                     │                 │
+                     │ PHP Application │
+                     │ FastAPI Service │
+                     │ HTML/CSS/JS     │
+                     └────────┬────────┘
+                              │
+                              │ Git
+                              ▼
+                     ┌─────────────────┐
+                     │     GitHub      │
+                     │                 │
+                     │ Source Code     │
+                     │ Version Control │
+                     └────────┬────────┘
+                              │
+                              │ Deploy
+                              ▼
+                     ┌─────────────────┐
+                     │     Render      │
+                     │                 │
+                     │ Web Application │
+                     │ FastAPI Service │
+                     └──────┬─────┬────┘
+                            │     │
+              ┌─────────────┘     └──────────────┐
+              ▼                                  ▼
+     ┌─────────────────┐                ┌─────────────────┐
+     │   Aiven MySQL   │                │    SerpAPI      │
+     │                 │                │                 │
+     │ Users           │                │ Search API      │
+     │ Listings        │                │ Product/Market  │
+     │ Messages        │                │ Information     │
+     │ Trades          │                │                 │
+     │ Reviews         │                └─────────────────┘
+     │ Reports         │
+     │ Fraud Data      │
+     └─────────────────┘
 ```
 
-This enables the platform to prioritize nearby products.
+---
+
+# 🧑‍💻 1. Development — VS Code
+
+The RADIUS project is developed locally using **Visual Studio Code**.
+
+The development environment contains:
+
+- PHP marketplace application
+- MySQL database integration
+- HTML/CSS/JavaScript frontend
+- Python/FastAPI AI service
+- SerpAPI integration
+- Authentication and session management
+- Marketplace features
+- Fraud-risk analysis
+- Hyperlocal location features
+
+### Development Flow
+
+```text
+VS Code
+   │
+   ├── PHP
+   ├── HTML
+   ├── CSS
+   ├── JavaScript
+   ├── Python
+   └── FastAPI
+        │
+        ▼
+   Local Testing
+        │
+        ▼
+   Git Commit
+```
+
+---
+
+# 🐙 2. Version Control — GitHub
+
+After development and testing, the source code is pushed to **GitHub**.
+
+GitHub is used for:
+
+- Source code management
+- Version control
+- Collaboration
+- Backup
+- Deployment integration
+
+### Git Flow
+
+```text
+VS Code
+   │
+   │ git add
+   ▼
+Git
+   │
+   │ git commit
+   ▼
+Local Repository
+   │
+   │ git push
+   ▼
+GitHub Repository
+```
+
+Example commands:
+
+```bash
+git add .
+git commit -m "Update RADIUS marketplace"
+git push origin main
+```
+
+---
+
+# ☁️ 3. Deployment — Render
+
+The RADIUS application is deployed using **Render**.
+
+Render connects with the GitHub repository and deploys the application from the repository.
+
+### Deployment Flow
+
+```text
+VS Code
+   │
+   ▼
+GitHub
+   │
+   │ Deploy
+   ▼
+Render
+   │
+   ├── PHP Web Application
+   │
+   └── FastAPI AI Service
+```
+
+Whenever the application is updated and the changes are pushed to GitHub, Render can rebuild and redeploy the application.
+
+---
+
+# 🗄️ 4. Cloud Database — Aiven MySQL
+
+RADIUS uses **Aiven MySQL** as its cloud-hosted database.
+
+The database stores important marketplace information such as:
+
+- Users
+- Listings
+- Listing images
+- Conversations
+- Messages
+- Trade requests
+- Reviews
+- Reports
+- Fraud predictions
+- Price data
+
+### Database Flow
+
+```text
+RADIUS Application
+        │
+        │ MySQL Connection
+        ▼
+   Aiven MySQL
+        │
+        ├── Users
+        ├── Listings
+        ├── Messages
+        ├── Trades
+        ├── Reviews
+        ├── Reports
+        └── Fraud Predictions
+```
+
+The application connects to Aiven using database credentials stored in environment variables.
+
+Example:
+
+```text
+DB_HOST=********
+DB_PORT=*****
+DB_NAME=********
+DB_USER=********
+DB_PASSWORD=********
+```
+
+---
+
+# 🐍 5. FastAPI AI Service
+
+The AI component is implemented separately using **Python and FastAPI**.
+
+The FastAPI service is responsible for processing listing information and returning structured risk-analysis results.
+
+The separation provides several advantages:
+
+- Independent AI service
+- Easier model development
+- Easier testing
+- API-based communication
+- Separation of marketplace and AI logic
+- Future model replacement capability
+
+### AI Service Flow
+
+```text
+PHP Application
+      │
+      │ HTTP Request
+      ▼
+FastAPI AI Service
+      │
+      ├── Price Analysis
+      ├── Image Analysis
+      ├── Text Analysis
+      ├── Seller Signals
+      └── Policy / Brand Signals
+              │
+              ▼
+       Risk Score 0–100
+              │
+              ▼
+         JSON Response
+              │
+              ▼
+       PHP Application
+```
+
+---
+
+# 🌐 6. External API — SerpAPI
+
+SerpAPI provides an external search interface that can be used to retrieve search and product-related information.
+
+### API Flow
+
+```text
+RADIUS
+  │
+  │ HTTPS Request
+  ▼
+SerpAPI
+  │
+  ▼
+Search / Product Results
+  │
+  ▼
+RADIUS
+  │
+  ▼
+Market / Product Reference
+```
+
+SerpAPI can provide an additional data source for:
+
+- Product lookup
+- Market price reference
+- Product comparison
+- Search-based analysis
+
+---
+
+# 🔐 7. Environment Variables & Secrets
+
+Sensitive credentials are not stored directly inside the source code.
+
+RADIUS uses environment variables for sensitive configuration.
+
+Typical variables include:
+
+```text
+DB_HOST
+DB_PORT
+DB_NAME
+DB_USER
+DB_PASSWORD
+
+SERPAPI_KEY
+
+FASTAPI_URL
+```
+
+Example:
+
+```text
+DB_HOST=your-aiven-host
+DB_PORT=your-port
+DB_NAME=radius
+DB_USER=your-user
+DB_PASSWORD=your-password
+
+SERPAPI_KEY=your-serpapi-key
+
+FASTAPI_URL=https://your-fastapi-service-url
+```
+
+> ⚠️ **Never commit passwords, API keys, database credentials, or secret keys to GitHub.**
+
+---
+
+# 🔄 Complete RADIUS Technology Flow
+
+```text
+                         👨‍💻 Developer
+                              │
+                              ▼
+                        ┌───────────┐
+                        │  VS Code  │
+                        └─────┬─────┘
+                              │
+                              │ Git
+                              ▼
+                        ┌───────────┐
+                        │  GitHub   │
+                        └─────┬─────┘
+                              │
+                              │ Deploy
+                              ▼
+                        ┌───────────┐
+                        │  Render   │
+                        └─────┬─────┘
+                              │
+                ┌─────────────┼─────────────┐
+                │             │             │
+                ▼             ▼             ▼
+          ┌──────────┐  ┌──────────┐  ┌──────────┐
+          │  Aiven   │  │ FastAPI  │  │  SerpAPI │
+          │  MySQL   │  │ AI       │  │ External │
+          │   DB     │  │ Service  │  │   API    │
+          └──────────┘  └────┬─────┘  └────┬─────┘
+                             │             │
+                             └──────┬──────┘
+                                    │
+                                    ▼
+                            ┌───────────────┐
+                            │     RADIUS    │
+                            │               │
+                            │ Marketplace   │
+                            │ Chat          │
+                            │ Trading       │
+                            │ Reviews       │
+                            │ Nearby Search │
+                            │ Trust Radar   │
+                            │ Fraud Risk    │
+                            └───────────────┘
+```
+
+---
+
+# 🚀 Production Request Flow
+
+When a user accesses the deployed RADIUS application:
+
+```text
+User Browser
+     │
+     ▼
+Render
+     │
+     ▼
+RADIUS Application
+     │
+     ├───────────────────────┐
+     │                       │
+     ▼                       ▼
+Aiven MySQL              FastAPI AI
+     │                       │
+     │                       ├── Risk Analysis
+     │                       └── JSON Result
+     │
+     └──────────────┐
+                    │
+                    ▼
+               RADIUS UI
+                    │
+                    ▼
+               User Result
+```
+
+For market or product information:
+
+```text
+RADIUS
+  │
+  ▼
+SerpAPI
+  │
+  ▼
+Search / Market Data
+  │
+  ▼
+RADIUS
+  │
+  ▼
+Price / Product Analysis
+```
+
+---
+
+# 🏗️ Complete System Architecture
+
+```text
+                         ┌──────────────────┐
+                         │      USER        │
+                         │   Web Browser    │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │      RENDER      │
+                         │                  │
+                         │  RADIUS Web App  │
+                         └───────┬──────────┘
+                                 │
+              ┌──────────────────┼──────────────────┐
+              │                  │                  │
+              ▼                  ▼                  ▼
+       ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+       │ Aiven MySQL │    │   FastAPI   │    │   SerpAPI   │
+       │             │    │ AI Service  │    │             │
+       │ Marketplace │    │             │    │ External    │
+       │ Database    │    │ Risk Engine │    │ Search API  │
+       └─────────────┘    └─────────────┘    └─────────────┘
+              │                  │                  │
+              └──────────────────┼──────────────────┘
+                                 │
+                                 ▼
+                         ┌──────────────────┐
+                         │     RADIUS       │
+                         │                  │
+                         │ Buy / Sell       │
+                         │ Chat             │
+                         │ Trade            │
+                         │ Reviews          │
+                         │ Nearby Search    │
+                         │ Trust Radar      │
+                         │ Fraud Detection  │
+                         └──────────────────┘
+```
 
 ---
 
@@ -809,7 +1258,7 @@ RADIUS/
 ├── create-listing.php
 ├── listing-details.php
 ├── messages.php
-├── trades.php
+├── trade-requests.php
 ├── reviews.php
 ├── login.php
 ├── register.php
@@ -828,41 +1277,55 @@ RADIUS/
 
 ## Frontend
 
-* HTML5
-* CSS3
-* JavaScript
-* Responsive Web Design
+- HTML5
+- CSS3
+- JavaScript
+- Responsive Web Design
 
 ## Backend
 
-* PHP
-* PHP Sessions
-* REST-style API communication
+- PHP
+- PHP Sessions
+- PDO / MySQL
+- REST-style API communication
 
 ## Database
 
-* MySQL
-* SQL
-* Relational database design
+- MySQL
+- Aiven MySQL
+- SQL
+- Relational database design
 
 ## AI Service
 
-* Python
-* FastAPI
-* Machine Learning / AI-based risk analysis
-* Image analysis
-* Text analysis
-* Price anomaly analysis
+- Python
+- FastAPI
+- Machine Learning / AI-based risk analysis
+- Image analysis
+- Text analysis
+- Price anomaly analysis
 
-## Development Environment
+## External API
 
-* XAMPP
-* Apache
-* MySQL
-* phpMyAdmin
-* Python
-* Git
-* GitHub
+- SerpAPI
+- Search API
+- Product / market information
+
+## Development & Deployment
+
+- Visual Studio Code
+- Git
+- GitHub
+- Render
+- Aiven
+
+## Local Development
+
+- XAMPP
+- Apache
+- MySQL
+- phpMyAdmin
+- Python
 
 ---
 
@@ -871,13 +1334,33 @@ RADIUS/
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/YOUR-REPOSITORY.git
-cd YOUR-REPOSITORY
+git clone https://github.com/alfahim-fuyad/radius.git
+cd radius
 ```
 
 ---
 
-## 2. Start XAMPP
+## 2. Local Development with VS Code
+
+Open the project in Visual Studio Code:
+
+```bash
+code .
+```
+
+Make sure the required software is installed:
+
+```text
+PHP
+MySQL
+Python
+Git
+XAMPP
+```
+
+---
+
+# 🖥️ 3. Start XAMPP
 
 Start the following services from XAMPP:
 
@@ -888,7 +1371,7 @@ MySQL
 
 ---
 
-## 3. Move the Project
+# 📂 4. Move the Project
 
 Copy the project into the XAMPP web directory:
 
@@ -899,14 +1382,12 @@ C:\xampp\htdocs\
 Example:
 
 ```text
-C:\xampp\htdocs\RADIUS
+C:\xampp\htdocs\radius
 ```
 
 ---
 
-# 🗄️ Database Setup
-
-## 1. Open phpMyAdmin
+# 🗄️ 5. Local Database Setup
 
 Open:
 
@@ -914,15 +1395,11 @@ Open:
 http://localhost/phpmyadmin
 ```
 
-## 2. Create the Database
-
-Create a MySQL database named:
+Create a database:
 
 ```text
 radius
 ```
-
-## 3. Import the SQL File
 
 Import:
 
@@ -930,13 +1407,11 @@ Import:
 database.sql
 ```
 
-The database should create the required tables automatically.
-
 ---
 
-# 🔧 Database Configuration
+# 🔧 6. Database Configuration
 
-Update the database configuration according to your local environment.
+For local development, configure the database connection according to your environment.
 
 Example:
 
@@ -954,11 +1429,11 @@ $conn = new mysqli(
 );
 ```
 
-> Update the credentials if your MySQL configuration is different.
+> For production, use the Aiven MySQL credentials through environment variables.
 
 ---
 
-# 🐍 AI Service Setup
+# 🐍 7. AI Service Setup
 
 Navigate to the AI service directory:
 
@@ -1004,64 +1479,99 @@ http://localhost:8000/docs
 
 ---
 
-# ▶️ Running the PHP Application
+# ▶️ 8. Run the PHP Application
 
-Start Apache and MySQL from XAMPP.
+Start **Apache** and **MySQL** from XAMPP.
 
 Then open:
 
 ```text
-http://localhost/RADIUS/
+http://localhost/radius/
 ```
-
-Depending on your folder name, the URL may be different.
 
 ---
 
-# 🔄 Complete Application Flow
+# ☁️ Production Deployment
 
-The overall RADIUS workflow can be represented as:
+The production architecture uses:
 
 ```text
-                    User
-                     │
-                     ▼
-               Authentication
-                     │
-                     ▼
-              Browse Listings
-                     │
-            ┌────────┴────────┐
-            ▼                 ▼
-       Search/Filter      Nearby Search
-            │                 │
-            └────────┬────────┘
-                     ▼
-               Listing Details
-                     │
-          ┌──────────┼──────────┐
-          ▼          ▼          ▼
-        Chat       Trade      Report
-          │          │          │
-          └──────────┼──────────┘
-                     ▼
-                Trust System
-                     │
-          ┌──────────┴──────────┐
-          ▼                     ▼
-      Reviews             AI Risk Analysis
-                                │
-                    ┌───────────┼───────────┐
-                    ▼           ▼           ▼
-                  Price       Image        Text
-                    │           │           │
-                    └───────────┼───────────┘
-                                ▼
-                          Risk Score
-                                │
-                                ▼
-                         User / Admin
+VS Code
+   │
+   ▼
+GitHub
+   │
+   ▼
+Render
+   │
+   ├── RADIUS Application
+   │
+   └── FastAPI AI Service
+          │
+          ├── Aiven MySQL
+          │
+          └── SerpAPI
 ```
+
+---
+
+# 🐙 GitHub Deployment Flow
+
+After making changes:
+
+```bash
+git add .
+git commit -m "Update RADIUS"
+git push origin main
+```
+
+Then Render can deploy the latest version from GitHub.
+
+---
+
+# ☁️ Render Configuration
+
+Typical production environment variables may include:
+
+```text
+DB_HOST
+DB_PORT
+DB_NAME
+DB_USER
+DB_PASSWORD
+SERPAPI_KEY
+FASTAPI_URL
+```
+
+These should be configured inside the Render service environment settings.
+
+---
+
+# 🗄️ Aiven MySQL Production Database
+
+The production application connects to the Aiven MySQL database.
+
+```text
+Render
+  │
+  │ Secure MySQL Connection
+  ▼
+Aiven MySQL
+```
+
+The database connection information should be stored as environment variables rather than hard-coded into PHP files.
+
+---
+
+# 🔎 SerpAPI Configuration
+
+Add the SerpAPI key to the production environment:
+
+```text
+SERPAPI_KEY=your_api_key
+```
+
+The application can then send requests to SerpAPI when external product or market information is required.
 
 ---
 
@@ -1071,43 +1581,20 @@ Security is an important component of RADIUS.
 
 The application considers:
 
-* Password hashing
-* Session-based authentication
-* Authorization
-* SQL injection prevention
-* Input validation
-* File upload validation
-* Access control
-* User reporting
-* Admin moderation
+- Password hashing
+- Session-based authentication
+- Authorization
+- SQL injection prevention
+- Prepared statements
+- Input validation
+- File upload validation
+- Access control
+- User reporting
+- Admin moderation
+- Environment-based secrets
+- API key protection
 
 For production deployment, additional security hardening should be applied.
-
----
-
-# 🌐 Deployment
-
-RADIUS can be deployed using a PHP-compatible hosting environment together with a MySQL-compatible database.
-
-The AI service can be deployed separately as a Python/FastAPI service.
-
-### Production Architecture
-
-```text
-                   Internet
-                      │
-          ┌───────────┴───────────┐
-          ▼                       ▼
-   PHP Web Application       FastAPI Service
-          │                       │
-          ▼                       ▼
-       MySQL DB             AI Risk Engine
-          │                       │
-          └───────────┬───────────┘
-                      │
-                      ▼
-                  RADIUS
-```
 
 ---
 
@@ -1115,51 +1602,71 @@ The AI service can be deployed separately as a Python/FastAPI service.
 
 Testing should cover the major system components.
 
-### Authentication
+## Authentication
 
-* Registration
-* Login
-* Logout
-* Invalid credentials
-* Session handling
-* Authorization
+- Registration
+- Login
+- Logout
+- Invalid credentials
+- Session handling
+- Authorization
 
-### Marketplace
+## Marketplace
 
-* Listing creation
-* Listing editing
-* Listing deletion
-* Search
-* Filtering
-* Image uploads
+- Listing creation
+- Listing editing
+- Listing deletion
+- Search
+- Filtering
+- Image uploads
 
-### Messaging
+## Location
 
-* Creating conversations
-* Sending messages
-* Receiving messages
+- Latitude/longitude storage
+- Nearby listing search
+- Distance calculation
+- Haversine formula
 
-### Trading
+## Messaging
 
-* Sending trade requests
-* Accepting requests
-* Rejecting requests
-* Cancelling requests
+- Creating conversations
+- Sending messages
+- Receiving messages
 
-### Reviews
+## Trading
 
-* Creating reviews
-* Rating validation
-* Review display
+- Sending trade requests
+- Accepting requests
+- Rejecting requests
+- Cancelling requests
 
-### AI Service
+## Reviews
 
-* Price anomaly detection
-* Image similarity analysis
-* Text analysis
-* Seller risk signals
-* Risk score generation
-* Risk explanation
+- Creating reviews
+- Rating validation
+- Review display
+
+## Reporting
+
+- Creating reports
+- Admin report review
+- Listing moderation
+
+## AI Service
+
+- Price anomaly detection
+- Image similarity analysis
+- Text analysis
+- Seller risk signals
+- Risk score generation
+- Risk explanation
+
+## External API
+
+- SerpAPI request
+- API response handling
+- Invalid API key handling
+- API failure handling
 
 ---
 
@@ -1167,21 +1674,22 @@ Testing should cover the major system components.
 
 Possible future improvements include:
 
-* Real-time notifications
-* Real-time messaging using WebSockets
-* More advanced recommendation systems
-* Improved image fraud detection
-* Deep-learning-based image analysis
-* Better price prediction
-* More sophisticated seller reputation scoring
-* Location-based recommendation ranking
-* Mobile application
-* Online payment integration
-* Map-based marketplace browsing
-* Automated moderation
-* Improved fraud-detection models
-* Model performance monitoring
-* More extensive fraud datasets
+- 🔔 Real-time notifications
+- 💬 Real-time messaging using WebSockets
+- 🤖 More advanced recommendation systems
+- 🖼️ Improved image fraud detection
+- 🧠 Deep-learning-based image analysis
+- 💰 Better price prediction
+- 👤 More sophisticated seller reputation scoring
+- 📍 Location-based recommendation ranking
+- 📱 Mobile application
+- 💳 Online payment integration
+- 🗺️ Map-based marketplace browsing
+- 🛡️ Automated moderation
+- 📊 Improved fraud-detection models
+- 📈 Model performance monitoring
+- 🗃️ More extensive fraud datasets
+- 🔐 Improved security monitoring
 
 ---
 
@@ -1198,27 +1706,159 @@ The primary objectives of RADIUS are:
 7. Provide explainable AI-based fraud-risk analysis.
 8. Combine automated risk detection with human moderation.
 9. Demonstrate integration between PHP, MySQL, and Python/FastAPI.
-10. Provide a practical academic implementation of AI-assisted marketplace security.
+10. Integrate external search information through SerpAPI.
+11. Demonstrate cloud database integration using Aiven MySQL.
+12. Deploy the application using GitHub and Render.
+13. Provide a practical academic implementation of AI-assisted marketplace security.
 
 ---
 
 # 📚 Academic Context
 
-**Course:** CSE479
-**Project Type:** Academic Mini Project
-**Project Name:** RADIUS — Hyperlocal Secondhand Marketplace
+| Item | Details |
+|---|---|
+| **Project Name** | RADIUS — Hyperlocal Secondhand Marketplace |
+| **Course** | CSE479 |
+| **Project Type** | Academic Mini Project |
+| **Backend** | PHP |
+| **Database** | Aiven MySQL |
+| **AI Service** | Python / FastAPI |
+| **External API** | SerpAPI |
+| **Frontend** | HTML / CSS / JavaScript |
+| **Development** | Visual Studio Code |
+| **Version Control** | Git / GitHub |
+| **Deployment** | Render |
+| **Local Environment** | XAMPP |
+| **Location Calculation** | Haversine Formula |
 
-### Core Technologies
+---
+
+# 🧰 Core Technologies
 
 ```text
 PHP
 MySQL
+Aiven MySQL
 Python
 FastAPI
+SerpAPI
 JavaScript
-HTML
-CSS
+HTML5
+CSS3
 Machine Learning / AI
+Git
+GitHub
+Render
+Visual Studio Code
+XAMPP
+```
+
+---
+
+# 🔄 One-Line Project Flow
+
+```text
+VS Code
+   ↓
+Git
+   ↓
+GitHub
+   ↓
+Render
+   ↓
+RADIUS Application
+   ├── Aiven MySQL
+   ├── FastAPI AI Service
+   └── SerpAPI
+```
+
+---
+
+# 🔄 Complete User-to-AI Flow
+
+```text
+User
+ │
+ ▼
+RADIUS Web Application
+ │
+ ├───────────────► Aiven MySQL
+ │                    │
+ │                    └── Users / Listings / Messages /
+ │                        Trades / Reviews / Reports
+ │
+ ├───────────────► FastAPI AI Service
+ │                    │
+ │                    ├── Price Analysis
+ │                    ├── Image Analysis
+ │                    ├── Text Analysis
+ │                    ├── Seller Analysis
+ │                    └── Policy / Brand Analysis
+ │                           │
+ │                           ▼
+ │                      Risk Score
+ │                           │
+ │                           ▼
+ │                      Trust Radar
+ │
+ └───────────────► SerpAPI
+                      │
+                      ▼
+                 Search / Market
+                    Information
+```
+
+---
+
+# 🌐 Final Deployment Architecture
+
+```text
+                              INTERNET
+                                  │
+                                  ▼
+                         ┌─────────────────┐
+                         │      USER       │
+                         │  Web Browser    │
+                         └────────┬────────┘
+                                  │
+                                  ▼
+                         ┌─────────────────┐
+                         │     RENDER      │
+                         │                 │
+                         │ RADIUS Web App  │
+                         └───────┬─────────┘
+                                 │
+                ┌────────────────┼────────────────┐
+                │                │                │
+                ▼                ▼                ▼
+       ┌────────────────┐ ┌──────────────┐ ┌──────────────┐
+       │  Aiven MySQL   │ │   FastAPI    │ │   SerpAPI    │
+       │                │ │  AI Service  │ │              │
+       │ Marketplace DB │ │              │ │ External API │
+       └────────────────┘ └──────┬───────┘ └──────────────┘
+                                 │
+                                 ▼
+                         ┌─────────────────┐
+                         │  Risk Analysis  │
+                         │                 │
+                         │ Price           │
+                         │ Image           │
+                         │ Text            │
+                         │ Seller          │
+                         │ Policy          │
+                         └────────┬────────┘
+                                  │
+                                  ▼
+                         ┌─────────────────┐
+                         │  Risk Score     │
+                         │     0–100       │
+                         └────────┬────────┘
+                                  │
+                                  ▼
+                         ┌─────────────────┐
+                         │     RADIUS      │
+                         │   Trust Radar   │
+                         └─────────────────┘
 ```
 
 ---
@@ -1232,19 +1872,6 @@ The AI-based fraud-risk score is an assistive signal and should **not be treated
 A high-risk score indicates that a listing contains multiple suspicious signals and may require further investigation.
 
 Final decisions should involve appropriate human review.
-
----
-
-# 👥 Contributors
-
-Add your project members here:
-
-```text
-1. Your Name
-2. Member Name
-3. Member Name
-4. Member Name
-```
 
 ---
 
@@ -1263,4 +1890,3 @@ If you plan to publish or reuse this project, update this section with the appro
 **Discover Locally. Trade Securely. Build Trust.**
 
 </p>
-```
