@@ -5,6 +5,7 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /
+
     envVars:
       - key: APP_ENV
         value: production
@@ -34,8 +35,12 @@ services:
       - key: DB_SSL_CA_PEM
         sync: false
 
-      # FastAPI service
+      # FastAPI
       - key: AI_SERVICE_URL
+        sync: false
+
+      # SerpApi
+      - key: SERPAPI_KEY
         sync: false
 
       - key: MAX_UPLOAD_MB
