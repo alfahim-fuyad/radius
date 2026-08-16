@@ -1,23 +1,30 @@
 <?php
+
 declare(strict_types=1);
+
 
 /*
 |--------------------------------------------------------------------------
-| Start PHP Session
+| Session
 |--------------------------------------------------------------------------
 */
 
 if (session_status() === PHP_SESSION_NONE) {
+
     session_set_cookie_params([
-        'lifetime' => 60 * 60 * 24 * 30, // 30 days
+        'lifetime' => 60 * 60 * 24 * 30,
         'path' => '/',
-        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'secure' => (
+            !empty($_SERVER['HTTPS']) &&
+            $_SERVER['HTTPS'] !== 'off'
+        ),
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
 
     session_start();
 }
+
 
 require_once dirname(__DIR__) . '/config/database.php';
 
@@ -40,67 +47,113 @@ function e(?string $value): string
 
 function redirect(string $path): never
 {
-    header('Location: ' . $path);
+    header(
+        'Location: ' . $path
+    );
+
     exit;
 }
 
 
-function flash(string $type, string $message): void
-{
-    $_SESSION['flash_' . $type] = $message;
+function flash(
+    string $type,
+    string $message
+): void {
+
+    $_SESSION[
+        'flash_' . $type
+    ] = $message;
 }
 
 
-function pull_flash(string $type): ?string
-{
-    $key = 'flash_' . $type;
+function pull_flash(
+    string $type
+): ?string {
 
-    $v = $_SESSION[$key] ?? null;
+    $key =
+        'flash_' . $type;
 
-    unset($_SESSION[$key]);
+    $value =
+        $_SESSION[$key] ?? null;
 
-    return $v;
+    unset(
+        $_SESSION[$key]
+    );
+
+    return $value;
 }
 
 
-function money(float|int|string $value): string
-{
-    return '৳' . number_format((float)$value, 0);
+function money(
+    float|int|string $value
+): string {
+
+    return '৳' .
+        number_format(
+            (float)$value,
+            0
+        );
 }
 
 
-function trust_label(string $status): string
-{
+/*
+|--------------------------------------------------------------------------
+| Trust
+|--------------------------------------------------------------------------
+*/
+
+function trust_label(
+    string $status
+): string {
+
     return [
-        'safe'       => 'Verified',
-        'low_risk'   => 'Under Review',
-        'suspicious' => 'Suspicious',
-        'high_risk'  => 'Flagged'
+        'safe' =>
+            'Verified',
+
+        'low_risk' =>
+            'Under Review',
+
+        'suspicious' =>
+            'Suspicious',
+
+        'high_risk' =>
+            'Flagged'
+
     ][$status] ?? 'Unchecked';
 }
 
 
-function trust_class(string $status): string
-{
-    return 'trust-' . preg_replace(
-        '/[^a-z_]/',
-        '',
-        $status
-    );
+function trust_class(
+    string $status
+): string {
+
+    return 'trust-' .
+        preg_replace(
+            '/[^a-z_]/',
+            '',
+            $status
+        );
 }
 
 
-function trust_state(string $status): string
-{
-    return match ($status) {
-        'safe' => 'verified',
+function trust_state(
+    string $status
+): string {
 
-        'low_risk' => 'review',
+    return match ($status) {
+
+        'safe' =>
+            'verified',
+
+        'low_risk' =>
+            'review',
 
         'suspicious',
-        'high_risk' => 'danger',
+        'high_risk' =>
+            'danger',
 
-        default => 'review'
+        default =>
+            'review'
     };
 }
 
@@ -116,56 +169,78 @@ function radius_visuals(): array
     return [
 
         'phone' => [
+
             'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=900&q=82'
         ],
 
         'laptop' => [
+
             'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=82'
         ],
 
         'camera' => [
+
             'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=900&q=82'
         ],
 
         'furniture' => [
+
             'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=82'
         ],
 
         'bicycle' => [
+
             'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?auto=format&fit=crop&w=900&q=82'
         ],
 
         'appliance' => [
+
             'https://images.unsplash.com/photo-1585659722983-3a675dabf23d?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=900&q=82'
         ],
 
         'fashion' => [
+
             'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=82'
         ],
 
         'books' => [
+
             'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=82'
         ],
 
         'gaming' => [
+
             'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=900&q=82'
         ],
 
         'accessories' => [
+
             'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=900&q=82',
+
             'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=82'
-        ],
+        ]
     ];
 }
 
@@ -187,68 +262,101 @@ function stable_visual_index(
 }
 
 
-function listing_visual(array $listing): string
-{
-    $uploaded = trim(
-        (string)($listing['image_path'] ?? '')
-    );
+function listing_visual(
+    array $listing
+): string {
+
+    $uploaded =
+        trim(
+            (string)(
+                $listing['image_path'] ?? ''
+            )
+        );
+
 
     if ($uploaded !== '') {
         return $uploaded;
     }
 
-    $all = radius_visuals();
 
-    $category = strtolower(
-        (string)(
-            $listing['category']
-            ?? 'accessories'
-        )
-    );
+    $all =
+        radius_visuals();
+
+
+    $category =
+        strtolower(
+            (string)(
+                $listing['category']
+                ?? 'accessories'
+            )
+        );
+
 
     $images =
         $all[$category]
         ?? $all['accessories'];
 
-    $seed = strtolower(
-        (string)(
-            $listing['title']
-            ?? $listing['id']
-            ?? $category
-        )
-    );
 
-    $index = stable_visual_index(
-        $seed,
-        count($images)
-    );
+    $seed =
+        strtolower(
+            (string)(
+                $listing['title']
+                ?? $listing['id']
+                ?? $category
+            )
+        );
+
+
+    $index =
+        stable_visual_index(
+            $seed,
+            count($images)
+        );
+
 
     if ($category === 'phone') {
 
-        if (str_contains($seed, 'samsung')) {
-
-            $index = min(
-                3,
-                count($images) - 1
-            );
-
-        } elseif (
-            str_contains($seed, 'urgent') ||
-            str_contains($seed, 'pro')
+        if (
+            str_contains(
+                $seed,
+                'samsung'
+            )
         ) {
 
-            $index = min(
-                2,
-                count($images) - 1
-            );
+            $index =
+                min(
+                    3,
+                    count($images) - 1
+                );
 
         } elseif (
-            str_contains($seed, 'iphone')
+            str_contains(
+                $seed,
+                'urgent'
+            ) ||
+            str_contains(
+                $seed,
+                'pro'
+            )
+        ) {
+
+            $index =
+                min(
+                    2,
+                    count($images) - 1
+                );
+
+        } elseif (
+            str_contains(
+                $seed,
+                'iphone'
+            )
         ) {
 
             $index = 0;
         }
     }
+
 
     return $images[$index];
 }
@@ -256,7 +364,7 @@ function listing_visual(array $listing): string
 
 /*
 |--------------------------------------------------------------------------
-| AI Helpers
+| AI HTTP
 |--------------------------------------------------------------------------
 */
 
@@ -266,46 +374,88 @@ function ai_json(
     int $timeout = 12
 ): ?array {
 
-    if (!function_exists('curl_init')) {
+    if (
+        !function_exists('curl_init')
+    ) {
         return null;
     }
 
-    $ch = curl_init(
-        AI_SERVICE_URL . $path
-    );
 
-    curl_setopt_array($ch, [
+    $url =
+        rtrim(
+            AI_SERVICE_URL,
+            '/'
+        ) .
+        '/' .
+        ltrim(
+            $path,
+            '/'
+        );
 
-        CURLOPT_RETURNTRANSFER => true,
 
-        CURLOPT_POST => true,
+    $json =
+        json_encode(
+            $payload,
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES
+        );
 
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json'
-        ],
 
-        CURLOPT_POSTFIELDS =>
-            json_encode(
-                $payload,
-                JSON_UNESCAPED_UNICODE |
-                JSON_UNESCAPED_SLASHES
-            ),
+    if ($json === false) {
+        return null;
+    }
 
-        CURLOPT_CONNECTTIMEOUT => 3,
 
-        CURLOPT_TIMEOUT => $timeout
-    ]);
+    $ch =
+        curl_init($url);
 
-    $body = curl_exec($ch);
 
-    $code = (int)curl_getinfo(
+    curl_setopt_array(
         $ch,
-        CURLINFO_HTTP_CODE
+        [
+
+            CURLOPT_RETURNTRANSFER =>
+                true,
+
+            CURLOPT_POST =>
+                true,
+
+            CURLOPT_HTTPHEADER => [
+
+                'Content-Type: application/json',
+
+                'Accept: application/json'
+            ],
+
+            CURLOPT_POSTFIELDS =>
+                $json,
+
+            CURLOPT_CONNECTTIMEOUT =>
+                3,
+
+            CURLOPT_TIMEOUT =>
+                $timeout
+        ]
     );
 
-    $err = curl_error($ch);
+
+    $body =
+        curl_exec($ch);
+
+
+    $code =
+        (int)curl_getinfo(
+            $ch,
+            CURLINFO_HTTP_CODE
+        );
+
+
+    $err =
+        curl_error($ch);
+
 
     curl_close($ch);
+
 
     if (
         $body === false ||
@@ -323,16 +473,25 @@ function ai_json(
         return null;
     }
 
-    $data = json_decode(
-        $body,
-        true
-    );
+
+    $data =
+        json_decode(
+            $body,
+            true
+        );
+
 
     return is_array($data)
         ? $data
         : null;
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| AI Image Hash
+|--------------------------------------------------------------------------
+*/
 
 function ai_hash_image(
     string $absolutePath
@@ -345,43 +504,73 @@ function ai_hash_image(
         return null;
     }
 
+
     $mime =
-        mime_content_type($absolutePath)
-        ?: 'image/jpeg';
+        mime_content_type(
+            $absolutePath
+        ) ?: 'image/jpeg';
 
-    $ch = curl_init(
-        AI_SERVICE_URL . '/hash-image'
-    );
 
-    curl_setopt_array($ch, [
+    $url =
+        rtrim(
+            AI_SERVICE_URL,
+            '/'
+        ) .
+        '/hash-image';
 
-        CURLOPT_RETURNTRANSFER => true,
 
-        CURLOPT_POST => true,
+    $ch =
+        curl_init($url);
 
-        CURLOPT_POSTFIELDS => [
-            'image' => new CURLFile(
-                $absolutePath,
-                $mime,
-                basename($absolutePath)
-            )
-        ],
 
-        CURLOPT_CONNECTTIMEOUT => 3,
-
-        CURLOPT_TIMEOUT => 12
-    ]);
-
-    $body = curl_exec($ch);
-
-    $code = (int)curl_getinfo(
+    curl_setopt_array(
         $ch,
-        CURLINFO_HTTP_CODE
+        [
+
+            CURLOPT_RETURNTRANSFER =>
+                true,
+
+            CURLOPT_POST =>
+                true,
+
+            CURLOPT_POSTFIELDS => [
+
+                'image' =>
+                    new CURLFile(
+                        $absolutePath,
+                        $mime,
+                        basename(
+                            $absolutePath
+                        )
+                    )
+            ],
+
+            CURLOPT_CONNECTTIMEOUT =>
+                3,
+
+            CURLOPT_TIMEOUT =>
+                12
+        ]
     );
 
-    $err = curl_error($ch);
+
+    $body =
+        curl_exec($ch);
+
+
+    $code =
+        (int)curl_getinfo(
+            $ch,
+            CURLINFO_HTTP_CODE
+        );
+
+
+    $err =
+        curl_error($ch);
+
 
     curl_close($ch);
+
 
     if (
         $body === false ||
@@ -399,20 +588,33 @@ function ai_hash_image(
         return null;
     }
 
-    $data = json_decode(
-        $body,
-        true
-    );
 
-    return is_array($data)
-        ? ($data['image_hash'] ?? null)
+    $data =
+        json_decode(
+            $body,
+            true
+        );
+
+
+    if (!is_array($data)) {
+        return null;
+    }
+
+
+    $hash =
+        $data['image_hash']
+        ?? null;
+
+
+    return is_string($hash)
+        ? $hash
         : null;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Listing Upload
+| Listing Upload Validation
 |--------------------------------------------------------------------------
 */
 
@@ -430,9 +632,16 @@ function validate_listing_upload(
         );
     }
 
+
+    $size =
+        (int)(
+            $file['size'] ?? 0
+        );
+
+
     if (
-        ($file['size'] ?? 0) <= 0 ||
-        $file['size'] > MAX_UPLOAD_BYTES
+        $size <= 0 ||
+        $size > MAX_UPLOAD_BYTES
     ) {
 
         throw new RuntimeException(
@@ -440,30 +649,50 @@ function validate_listing_upload(
         );
     }
 
-    $tmp = $file['tmp_name'];
 
-    if (!is_uploaded_file($tmp)) {
+    $tmp =
+        (string)(
+            $file['tmp_name']
+            ?? ''
+        );
+
+
+    if (
+        $tmp === '' ||
+        !is_uploaded_file($tmp)
+    ) {
 
         throw new RuntimeException(
             'Invalid uploaded image.'
         );
     }
 
-    $finfo = new finfo(
-        FILEINFO_MIME_TYPE
-    );
 
-    $mime = $finfo->file($tmp);
+    $finfo =
+        new finfo(
+            FILEINFO_MIME_TYPE
+        );
+
+
+    $mime =
+        $finfo->file($tmp);
+
 
     $allowed = [
-        'image/jpeg' => 'jpg',
-        'image/png'  => 'png',
-        'image/webp' => 'webp'
+
+        'image/jpeg' =>
+            'jpg',
+
+        'image/png' =>
+            'png',
+
+        'image/webp' =>
+            'webp'
     ];
 
+
     if (
-        !isset($allowed[$mime]) ||
-        @getimagesize($tmp) === false
+        !isset($allowed[$mime])
     ) {
 
         throw new RuntimeException(
@@ -471,12 +700,28 @@ function validate_listing_upload(
         );
     }
 
-    $originalExt = strtolower(
-        pathinfo(
-            (string)$file['name'],
-            PATHINFO_EXTENSION
-        )
-    );
+
+    if (
+        @getimagesize($tmp) === false
+    ) {
+
+        throw new RuntimeException(
+            'Uploaded file is not a valid image.'
+        );
+    }
+
+
+    $originalExt =
+        strtolower(
+            pathinfo(
+                (string)(
+                    $file['name']
+                    ?? ''
+                ),
+                PATHINFO_EXTENSION
+            )
+        );
+
 
     if (
         !in_array(
@@ -496,6 +741,7 @@ function validate_listing_upload(
         );
     }
 
+
     return [
         $mime,
         $allowed[$mime]
@@ -503,14 +749,30 @@ function validate_listing_upload(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| Save Listing Upload
+|--------------------------------------------------------------------------
+*/
+
 function save_listing_upload(
     array $file
 ): array {
 
-    [$mime, $ext] =
-        validate_listing_upload($file);
+    [
+        $mime,
+        $ext
+    ] =
+        validate_listing_upload(
+            $file
+        );
 
-    if (!is_dir(UPLOAD_LISTING_DIR)) {
+
+    if (
+        !is_dir(
+            UPLOAD_LISTING_DIR
+        )
+    ) {
 
         if (
             !mkdir(
@@ -518,7 +780,9 @@ function save_listing_upload(
                 0755,
                 true
             ) &&
-            !is_dir(UPLOAD_LISTING_DIR)
+            !is_dir(
+                UPLOAD_LISTING_DIR
+            )
         ) {
 
             throw new RuntimeException(
@@ -527,12 +791,14 @@ function save_listing_upload(
         }
     }
 
+
     $name =
         bin2hex(
             random_bytes(18)
         ) .
         '.' .
         $ext;
+
 
     $dest =
         rtrim(
@@ -541,6 +807,7 @@ function save_listing_upload(
         ) .
         DIRECTORY_SEPARATOR .
         $name;
+
 
     if (
         !move_uploaded_file(
@@ -554,9 +821,14 @@ function save_listing_upload(
         );
     }
 
+
     return [
-        '/uploads/listings/' . $name,
+
+        '/uploads/listings/' .
+            $name,
+
         $dest,
+
         $mime
     ];
 }
@@ -574,102 +846,178 @@ function seller_risk_context(
 
     $pdo = db();
 
-    $stmt = $pdo->prepare(
-        "SELECT DATEDIFF(NOW(), created_at)
-         FROM users
-         WHERE id=?"
-    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Account age
+    |--------------------------------------------------------------------------
+    */
+
+    $stmt =
+        $pdo->prepare(
+            "SELECT DATEDIFF(
+                NOW(),
+                created_at
+            )
+            FROM users
+            WHERE id=?"
+        );
+
 
     $stmt->execute([
         $sellerId
     ]);
 
-    $age = (int)(
-        $stmt->fetchColumn() ?: 0
-    );
+
+    $age =
+        (int)(
+            $stmt->fetchColumn()
+            ?: 0
+        );
 
 
-    $q = $pdo->prepare(
-        "SELECT COUNT(*)
-         FROM listings
-         WHERE user_id=?"
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Previous listings
+    |--------------------------------------------------------------------------
+    */
+
+    $q =
+        $pdo->prepare(
+            "SELECT COUNT(*)
+             FROM listings
+             WHERE user_id=?"
+        );
+
 
     $q->execute([
         $sellerId
     ]);
 
-    $listings = (int)$q->fetchColumn();
+
+    $listings =
+        (int)$q->fetchColumn();
 
 
-    $q = $pdo->prepare(
-        "SELECT COUNT(*)
-         FROM reports r
-         JOIN listings l
-           ON l.id=r.listing_id
-         WHERE l.user_id=?"
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Reports
+    |--------------------------------------------------------------------------
+    */
+
+    $q =
+        $pdo->prepare(
+            "SELECT COUNT(*)
+             FROM reports r
+             JOIN listings l
+               ON l.id = r.listing_id
+             WHERE l.user_id=?"
+        );
+
 
     $q->execute([
         $sellerId
     ]);
 
-    $reports = (int)$q->fetchColumn();
+
+    $reports =
+        (int)$q->fetchColumn();
 
 
-    $q = $pdo->prepare(
-        "SELECT COUNT(*)
-         FROM trade_requests
-         WHERE seller_id=?
-         AND status='completed'"
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Completed trades
+    |--------------------------------------------------------------------------
+    */
+
+    $q =
+        $pdo->prepare(
+            "SELECT COUNT(*)
+             FROM trade_requests
+             WHERE seller_id=?
+             AND status='completed'"
+        );
+
 
     $q->execute([
         $sellerId
     ]);
 
-    $completed = (int)$q->fetchColumn();
+
+    $completed =
+        (int)$q->fetchColumn();
 
 
-    $q = $pdo->prepare(
-        "SELECT COUNT(*)
-         FROM listings
-         WHERE user_id=?
-         AND status='removed'"
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Removed listings
+    |--------------------------------------------------------------------------
+    */
+
+    $q =
+        $pdo->prepare(
+            "SELECT COUNT(*)
+             FROM listings
+             WHERE user_id=?
+             AND status='removed'"
+        );
+
 
     $q->execute([
         $sellerId
     ]);
 
-    $removed = (int)$q->fetchColumn();
+
+    $removed =
+        (int)$q->fetchColumn();
 
 
-    $q = $pdo->prepare(
-        "SELECT COUNT(*)
-         FROM listings
-         WHERE user_id=?
-         AND trust_status IN
-         ('suspicious','high_risk')"
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Suspicious listings
+    |--------------------------------------------------------------------------
+    */
+
+    $q =
+        $pdo->prepare(
+            "SELECT COUNT(*)
+             FROM listings
+             WHERE user_id=?
+             AND trust_status IN
+             ('suspicious','high_risk')"
+        );
+
 
     $q->execute([
         $sellerId
     ]);
+
 
     $suspicious =
         (int)$q->fetchColumn();
 
 
-    $q = $pdo->prepare(
-        "SELECT COALESCE(AVG(rating),0)
-         FROM reviews
-         WHERE reviewed_user_id=?"
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Average rating
+    |--------------------------------------------------------------------------
+    */
+
+    $q =
+        $pdo->prepare(
+            "SELECT COALESCE(
+                AVG(rating),
+                0
+            )
+            FROM reviews
+            WHERE reviewed_user_id=?"
+        );
+
 
     $q->execute([
         $sellerId
     ]);
+
 
     $rating =
         (float)$q->fetchColumn();
@@ -705,6 +1053,23 @@ function seller_risk_context(
 |--------------------------------------------------------------------------
 | Fraud Analysis
 |--------------------------------------------------------------------------
+|
+| IMPORTANT:
+|
+| This function NEVER changes the original listing price.
+|
+| AI output:
+|
+| fraud_score
+| image_score
+| price_score
+| seller_score
+| text_score
+| policy_score
+|
+| These are risk scores only.
+|
+|--------------------------------------------------------------------------
 */
 
 function run_fraud_analysis(
@@ -713,33 +1078,68 @@ function run_fraud_analysis(
 
     $pdo = db();
 
-    $stmt = $pdo->prepare(
-        'SELECT *
-         FROM listings
-         WHERE id=?'
-    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get listing
+    |--------------------------------------------------------------------------
+    */
+
+    $stmt =
+        $pdo->prepare(
+            "SELECT *
+             FROM listings
+             WHERE id=?"
+        );
+
 
     $stmt->execute([
         $listingId
     ]);
 
-    $listing = $stmt->fetch();
+
+    $listing =
+        $stmt->fetch(
+            PDO::FETCH_ASSOC
+        );
+
 
     if (!$listing) {
         return null;
     }
 
 
-    $h = $pdo->prepare(
-        'SELECT image_hash
-         FROM listing_images
-         WHERE listing_id=?
-         AND image_hash IS NOT NULL'
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | IMPORTANT:
+    | Preserve original price.
+    |--------------------------------------------------------------------------
+    */
+
+    $originalPrice =
+        (float)$listing['price'];
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Own image hashes
+    |--------------------------------------------------------------------------
+    */
+
+    $h =
+        $pdo->prepare(
+            "SELECT image_hash
+             FROM listing_images
+             WHERE listing_id=?
+             AND image_hash IS NOT NULL
+             AND image_hash <> ''"
+        );
+
 
     $h->execute([
         $listingId
     ]);
+
 
     $own =
         $h->fetchAll(
@@ -747,16 +1147,27 @@ function run_fraud_analysis(
         );
 
 
-    $all = $pdo->prepare(
-        'SELECT li.image_hash
-         FROM listing_images li
-         WHERE li.listing_id<>?
-         AND li.image_hash IS NOT NULL'
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Existing image hashes
+    |--------------------------------------------------------------------------
+    */
+
+    $all =
+        $pdo->prepare(
+            "SELECT li.image_hash
+             FROM listing_images li
+             WHERE li.listing_id<>?
+             AND li.image_hash IS NOT NULL
+             AND li.image_hash <> ''
+             LIMIT 1000"
+        );
+
 
     $all->execute([
         $listingId
     ]);
+
 
     $existingHashes =
         $all->fetchAll(
@@ -764,16 +1175,28 @@ function run_fraud_analysis(
         );
 
 
-    $d = $pdo->prepare(
-        'SELECT description
-         FROM listings
-         WHERE id<>?
-         LIMIT 200'
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Existing descriptions
+    |--------------------------------------------------------------------------
+    */
+
+    $d =
+        $pdo->prepare(
+            "SELECT description
+             FROM listings
+             WHERE id<>?
+             AND description IS NOT NULL
+             AND description <> ''
+             ORDER BY id DESC
+             LIMIT 200"
+        );
+
 
     $d->execute([
         $listingId
     ]);
+
 
     $existingDescriptions =
         $d->fetchAll(
@@ -781,25 +1204,41 @@ function run_fraud_analysis(
         );
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | AI payload
+    |--------------------------------------------------------------------------
+    |
+    | Price here is READ-ONLY input for AI.
+    |
+    | AI can calculate price_score,
+    | but it must never return a replacement
+    | product price to be saved into listings.price.
+    |--------------------------------------------------------------------------
+    */
+
     $payload = [
 
         'title' =>
-            $listing['title'],
+            (string)$listing['title'],
 
         'description' =>
-            $listing['description'],
+            (string)$listing['description'],
 
         'category' =>
-            $listing['category'],
+            (string)$listing['category'],
 
         'brand' =>
-            $listing['brand'],
+            (string)$listing['brand'],
 
         'condition' =>
-            $listing['item_condition'],
+            (string)$listing['item_condition'],
 
+        /*
+         * ORIGINAL PRICE
+         */
         'price' =>
-            (float)$listing['price'],
+            $originalPrice,
 
         'seller_information' =>
             seller_risk_context(
@@ -817,11 +1256,19 @@ function run_fraud_analysis(
     ];
 
 
-    $result = ai_json(
-        '/analyze-listing',
-        $payload,
-        20
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Call AI
+    |--------------------------------------------------------------------------
+    */
+
+    $result =
+        ai_json(
+            '/analyze-listing',
+            $payload,
+            20
+        );
+
 
     if (!$result) {
         return null;
@@ -830,22 +1277,32 @@ function run_fraud_analysis(
 
     /*
     |--------------------------------------------------------------------------
-    | Validate AI Result
+    | Trust status
     |--------------------------------------------------------------------------
     */
 
     $trustStatus =
-        (string)(
-            $result['trust_status']
-            ?? 'low_risk'
+        strtolower(
+            trim(
+                (string)(
+                    $result['trust_status']
+                    ?? 'low_risk'
+                )
+            )
         );
 
+
     $allowedStatuses = [
+
         'safe',
+
         'low_risk',
+
         'suspicious',
+
         'high_risk'
     ];
+
 
     if (
         !in_array(
@@ -855,7 +1312,26 @@ function run_fraud_analysis(
         )
     ) {
 
-        $trustStatus = 'low_risk';
+        $trustStatus =
+            'low_risk';
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fraud score
+    |--------------------------------------------------------------------------
+    */
+
+    $fraudScore =
+        (float)(
+            $result['fraud_score']
+            ?? 0
+        );
+
+
+    if (!is_finite($fraudScore)) {
+        $fraudScore = 0;
     }
 
 
@@ -864,46 +1340,274 @@ function run_fraud_analysis(
             0,
             min(
                 100,
-                (float)(
-                    $result['fraud_score']
-                    ?? 0
-                )
+                $fraudScore
             )
         );
 
 
-    $moderation =
-        in_array(
-            $trustStatus,
-            [
-                'suspicious',
-                'high_risk'
-            ],
-            true
-        )
-        ? 'flagged'
-        : 'approved';
+    /*
+    |--------------------------------------------------------------------------
+    | Component scores
+    |--------------------------------------------------------------------------
+    */
+
+    $imageScore =
+        (float)(
+            $result['image_score']
+            ?? 0
+        );
+
+
+    $priceScore =
+        (float)(
+            $result['price_score']
+            ?? 0
+        );
+
+
+    $sellerScore =
+        (float)(
+            $result['seller_score']
+            ?? 0
+        );
+
+
+    $textScore =
+        (float)(
+            $result['text_score']
+            ?? 0
+        );
+
+
+    $policyScore =
+        (float)(
+            $result['policy_score']
+            ?? 0
+        );
 
 
     /*
     |--------------------------------------------------------------------------
-    | Save Analysis
+    | Normalize component scores
+    |--------------------------------------------------------------------------
+    */
+
+    $imageScore =
+        max(
+            0,
+            min(
+                100,
+                $imageScore
+            )
+        );
+
+
+    $priceScore =
+        max(
+            0,
+            min(
+                100,
+                $priceScore
+            )
+        );
+
+
+    $sellerScore =
+        max(
+            0,
+            min(
+                100,
+                $sellerScore
+            )
+        );
+
+
+    $textScore =
+        max(
+            0,
+            min(
+                100,
+                $textScore
+            )
+        );
+
+
+    $policyScore =
+        max(
+            0,
+            min(
+                100,
+                $policyScore
+            )
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Moderation information
+    |--------------------------------------------------------------------------
+    |
+    | IMPORTANT FIX:
+    |
+    | Do NOT change listing status here.
+    |
+    | Before:
+    |
+    | suspicious/high_risk -> flagged
+    | safe/low_risk -> approved
+    |
+    | That caused automatic status changes.
+    |
+    | Now:
+    |
+    | status remains pending.
+    |
+    */
+
+    $currentStatus =
+        (string)(
+            $listing['status']
+            ?? 'pending'
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Feature snapshot
+    |--------------------------------------------------------------------------
+    */
+
+    $featureSnapshot =
+        $result['feature_snapshot']
+        ?? $payload;
+
+
+    if (!is_array($featureSnapshot)) {
+
+        $featureSnapshot =
+            $payload;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Add protected original price
+    |--------------------------------------------------------------------------
+    |
+    | This makes it explicit that AI analysis used the
+    | original seller-entered price.
+    |--------------------------------------------------------------------------
+    */
+
+    $featureSnapshot[
+        'original_listing_price'
+    ] = $originalPrice;
+
+
+    $featureSnapshot[
+        'price_was_modified_by_ai'
+    ] = false;
+
+
+    $featureSnapshot[
+        'price_score_is_risk_only'
+    ] = true;
+
+
+    $featureSnapshotJson =
+        json_encode(
+            $featureSnapshot,
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES
+        );
+
+
+    if (
+        $featureSnapshotJson === false
+    ) {
+
+        $featureSnapshotJson =
+            json_encode(
+                $payload,
+                JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Explanation
+    |--------------------------------------------------------------------------
+    */
+
+    $explanation =
+        (string)(
+            $result['explanation']
+            ?? 'No explanation provided.'
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Model information
+    |--------------------------------------------------------------------------
+    */
+
+    $modelName =
+        (string)(
+            $result['model_name']
+            ?? 'radius_explainable_ensemble'
+        );
+
+
+    $modelVersion =
+        (string)(
+            $result['model_version']
+            ?? '1.0'
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save fraud analysis
     |--------------------------------------------------------------------------
     */
 
     $pdo->beginTransaction();
 
+
     try {
 
-        $u = $pdo->prepare(
-            'UPDATE listings
-             SET fraud_score=?,
-                 trust_status=?,
-                 fraud_checked=1,
-                 status=?,
-                 updated_at=NOW()
-             WHERE id=?'
-        );
+        /*
+        |--------------------------------------------------------------------------
+        | Update ONLY risk-related fields
+        |--------------------------------------------------------------------------
+        |
+        | Notice:
+        |
+        | price is NOT present here.
+        |
+        | title is NOT present.
+        | description is NOT present.
+        | category is NOT present.
+        | brand is NOT present.
+        | condition is NOT present.
+        |
+        | status is NOT changed.
+        |--------------------------------------------------------------------------
+        */
+
+        $u =
+            $pdo->prepare(
+                "UPDATE listings
+                 SET fraud_score=?,
+                     trust_status=?,
+                     fraud_checked=1,
+                     updated_at=NOW()
+                 WHERE id=?"
+            );
+
 
         $u->execute([
 
@@ -911,29 +1615,47 @@ function run_fraud_analysis(
 
             $trustStatus,
 
-            $moderation,
-
             $listingId
         ]);
 
 
-        $ins = $pdo->prepare(
-            'INSERT INTO fraud_predictions
-            (
-                listing_id,
-                fraud_score,
-                image_score,
-                price_score,
-                seller_score,
-                text_score,
-                policy_score,
-                model_name,
-                model_version,
-                explanation,
-                feature_snapshot
-            )
-            VALUES (?,?,?,?,?,?,?,?,?,?,?)'
-        );
+        /*
+        |--------------------------------------------------------------------------
+        | Insert prediction
+        |--------------------------------------------------------------------------
+        */
+
+        $ins =
+            $pdo->prepare(
+                "INSERT INTO fraud_predictions
+                (
+                    listing_id,
+                    fraud_score,
+                    image_score,
+                    price_score,
+                    seller_score,
+                    text_score,
+                    policy_score,
+                    model_name,
+                    model_version,
+                    explanation,
+                    feature_snapshot
+                )
+                VALUES
+                (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
+                )"
+            );
 
 
         $ins->execute([
@@ -942,54 +1664,90 @@ function run_fraud_analysis(
 
             $fraudScore,
 
-            (float)(
-                $result['image_score']
-                ?? 0
-            ),
+            $imageScore,
 
-            (float)(
-                $result['price_score']
-                ?? 0
-            ),
+            /*
+             * This is ONLY the price anomaly/risk score.
+             *
+             * It is NOT the product price.
+             */
+            $priceScore,
 
-            (float)(
-                $result['seller_score']
-                ?? 0
-            ),
+            $sellerScore,
 
-            (float)(
-                $result['text_score']
-                ?? 0
-            ),
+            $textScore,
 
-            (float)(
-                $result['policy_score']
-                ?? 0
-            ),
+            $policyScore,
 
-            $result['model_name']
-                ?? 'radius_explainable_ensemble',
+            $modelName,
 
-            $result['model_version']
-                ?? '1.0',
+            $modelVersion,
 
-            $result['explanation']
-                ?? 'No explanation provided.',
+            $explanation,
 
-            json_encode(
-                $result['feature_snapshot']
-                    ?? $payload,
-                JSON_UNESCAPED_UNICODE |
-                JSON_UNESCAPED_SLASHES
-            )
+            $featureSnapshotJson
         ]);
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Safety check
+        |--------------------------------------------------------------------------
+        |
+        | Verify that original price did not change.
+        |--------------------------------------------------------------------------
+        */
+
+        $check =
+            $pdo->prepare(
+                "SELECT price
+                 FROM listings
+                 WHERE id=?"
+            );
+
+
+        $check->execute([
+            $listingId
+        ]);
+
+
+        $savedPrice =
+            (float)$check->fetchColumn();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Detect accidental price modification
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            abs(
+                $savedPrice -
+                $originalPrice
+            ) > 0.00001
+        ) {
+
+            throw new RuntimeException(
+                'Safety check failed: listing price was modified unexpectedly.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Commit
+        |--------------------------------------------------------------------------
+        */
 
         $pdo->commit();
 
     } catch (Throwable $e) {
 
-        if ($pdo->inTransaction()) {
+        if (
+            $pdo->inTransaction()
+        ) {
+
             $pdo->rollBack();
         }
 
@@ -997,7 +1755,59 @@ function run_fraud_analysis(
     }
 
 
-    return $result;
+    /*
+    |--------------------------------------------------------------------------
+    | Return analysis
+    |--------------------------------------------------------------------------
+    */
+
+    return [
+
+        'trust_status' =>
+            $trustStatus,
+
+        'fraud_score' =>
+            $fraudScore,
+
+        'image_score' =>
+            $imageScore,
+
+        'price_score' =>
+            $priceScore,
+
+        'seller_score' =>
+            $sellerScore,
+
+        'text_score' =>
+            $textScore,
+
+        'policy_score' =>
+            $policyScore,
+
+        'model_name' =>
+            $modelName,
+
+        'model_version' =>
+            $modelVersion,
+
+        'explanation' =>
+            $explanation,
+
+        'feature_snapshot' =>
+            $featureSnapshot,
+
+        /*
+         * Explicit protection
+         */
+        'original_price' =>
+            $originalPrice,
+
+        'price_modified' =>
+            false,
+
+        'listing_status' =>
+            $currentStatus
+    ];
 }
 
 
@@ -1017,7 +1827,10 @@ function haversine_sql(
             1,
             COS(RADIANS(:ulat1))
             * COS(RADIANS($lat))
-            * COS(RADIANS($lng) - RADIANS(:ulng))
+            * COS(
+                RADIANS($lng)
+                - RADIANS(:ulng)
+            )
             + SIN(RADIANS(:ulat2))
             * SIN(RADIANS($lat))
         )

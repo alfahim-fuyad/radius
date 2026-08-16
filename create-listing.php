@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Read & sanitize input
+        | Read input
         |--------------------------------------------------------------------------
         */
 
@@ -54,20 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             )
         );
 
-        $price = (float)(
-            $_POST['price'] ?? 0
+        $priceRaw = trim(
+            (string)($_POST['price'] ?? '')
         );
 
         $location = trim(
             (string)($_POST['location'] ?? '')
         );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Latitude / Longitude
-        |--------------------------------------------------------------------------
-        */
 
         $latitudeRaw = trim(
             (string)($_POST['latitude'] ?? '')
@@ -76,53 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $longitudeRaw = trim(
             (string)($_POST['longitude'] ?? '')
         );
-
-        $latitude = null;
-        $longitude = null;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validate latitude
-        |--------------------------------------------------------------------------
-        */
-
-        if ($latitudeRaw !== '') {
-
-            if (
-                !is_numeric($latitudeRaw) ||
-                (float)$latitudeRaw < -90 ||
-                (float)$latitudeRaw > 90
-            ) {
-                throw new RuntimeException(
-                    'Invalid latitude.'
-                );
-            }
-
-            $latitude = (float)$latitudeRaw;
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validate longitude
-        |--------------------------------------------------------------------------
-        */
-
-        if ($longitudeRaw !== '') {
-
-            if (
-                !is_numeric($longitudeRaw) ||
-                (float)$longitudeRaw < -180 ||
-                (float)$longitudeRaw > 180
-            ) {
-                throw new RuntimeException(
-                    'Invalid longitude.'
-                );
-            }
-
-            $longitude = (float)$longitudeRaw;
-        }
 
 
         /*
@@ -157,6 +103,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
 
+        if (
+            mb_strlen($category) > 100
+        ) {
+            throw new RuntimeException(
+                'Category is too long.'
+            );
+        }
+
+
+        if (
+            mb_strlen($brand) > 100
+        ) {
+            throw new RuntimeException(
+                'Brand is too long.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Condition
+        |--------------------------------------------------------------------------
+        */
+
         $allowedConditions = [
             'new',
             'excellent',
@@ -178,6 +148,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Price
+        |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        | This is the ORIGINAL seller-entered price.
+        | AI analysis NEVER modifies this value.
+        |
+        */
+
+        if (
+            $priceRaw === '' ||
+            !is_numeric($priceRaw)
+        ) {
+            throw new RuntimeException(
+                'Please enter a valid price.'
+            );
+        }
+
+        $price = (float)$priceRaw;
+
+
+        if (!is_finite($price)) {
+            throw new RuntimeException(
+                'Please enter a valid price.'
+            );
+        }
+
+
         if ($price <= 0) {
             throw new RuntimeException(
                 'Please enter a valid price.'
@@ -192,6 +192,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Location
+        |--------------------------------------------------------------------------
+        */
+
         if ($location === '') {
             throw new RuntimeException(
                 'Please enter the item location.'
@@ -199,35 +205,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
 
+        if (
+            mb_strlen($location) > 255
+        ) {
+            throw new RuntimeException(
+                'Location is too long.'
+            );
+        }
+
+
         /*
         |--------------------------------------------------------------------------
-        | Validate uploaded image
+        | Latitude
         |--------------------------------------------------------------------------
         */
 
-        $image = $_FILES['image'] ?? [];
+        $latitude = null;
 
-        if (!is_array($image)) {
+        if ($latitudeRaw !== '') {
+
+            if (
+                !is_numeric($latitudeRaw)
+            ) {
+                throw new RuntimeException(
+                    'Invalid latitude.'
+                );
+            }
+
+            $latitudeValue = (float)$latitudeRaw;
+
+            if (
+                !is_finite($latitudeValue) ||
+                $latitudeValue < -90 ||
+                $latitudeValue > 90
+            ) {
+                throw new RuntimeException(
+                    'Latitude must be between -90 and 90.'
+                );
+            }
+
+            $latitude = $latitudeValue;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Longitude
+        |--------------------------------------------------------------------------
+        */
+
+        $longitude = null;
+
+        if ($longitudeRaw !== '') {
+
+            if (
+                !is_numeric($longitudeRaw)
+            ) {
+                throw new RuntimeException(
+                    'Invalid longitude.'
+                );
+            }
+
+            $longitudeValue = (float)$longitudeRaw;
+
+            if (
+                !is_finite($longitudeValue) ||
+                $longitudeValue < -180 ||
+                $longitudeValue > 180
+            ) {
+                throw new RuntimeException(
+                    'Longitude must be between -180 and 180.'
+                );
+            }
+
+            $longitude = $longitudeValue;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Image validation
+        |--------------------------------------------------------------------------
+        */
+
+        $image = $_FILES['image'] ?? null;
+
+        if (
+            !is_array($image)
+        ) {
             throw new RuntimeException(
                 'Please upload a product image.'
             );
         }
 
-        /*
-         * validate_listing_upload() already performs:
-         * - upload error validation
-         * - file size validation
-         * - MIME validation
-         * - image validation
-         * - extension validation
-         */
 
         validate_listing_upload($image);
 
 
         /*
         |--------------------------------------------------------------------------
-        | Save uploaded image
+        | Save image
         |--------------------------------------------------------------------------
         */
 
@@ -240,7 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Database connection
+        | Database
         |--------------------------------------------------------------------------
         */
 
@@ -251,8 +328,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Insert listing
+        | Create listing
         |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        | status is ALWAYS pending here.
+        |
+        | AI cannot directly approve/remove the listing.
+        |
         */
 
         $stmt = $pdo->prepare(
@@ -296,7 +379,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $category,
             $brand,
             $condition,
+
+            /*
+             * ORIGINAL PRICE
+             *
+             * Never replace this with AI output.
+             */
             $price,
+
             $location,
             $latitude,
             $longitude
@@ -305,7 +395,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Get listing ID
+        | Listing ID
         |--------------------------------------------------------------------------
         */
 
@@ -320,11 +410,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Generate image hash
+        | Image hash
         |--------------------------------------------------------------------------
-        |
-        | AI service unavailable হলে listing creation বন্ধ হবে না।
-        |
         */
 
         $imageHash = null;
@@ -356,7 +443,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Insert listing image
+        | Insert image
         |--------------------------------------------------------------------------
         */
 
@@ -394,10 +481,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Run fraud analysis AFTER commit
+        | AI Fraud Analysis
         |--------------------------------------------------------------------------
         |
-        | AI service down হলেও listing হারাবে না।
+        | AI runs AFTER listing creation.
+        |
+        | IMPORTANT:
+        | AI analysis can update risk fields only.
+        |
+        | It cannot modify:
+        | - title
+        | - description
+        | - price
+        | - category
+        | - brand
+        | - condition
+        | - location
         |
         */
 
@@ -424,15 +523,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Result message
+        | Result
         |--------------------------------------------------------------------------
         */
 
         if (!$analysis) {
 
             flash(
-                'error',
-                'Listing created successfully, but fraud analysis is temporarily unavailable. An admin can retry the analysis.'
+                'success',
+                'Listing created successfully. Fraud analysis is temporarily unavailable. Your listing is pending review.'
             );
 
         } else {
@@ -447,6 +546,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ?? 0
             );
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | IMPORTANT
+            |--------------------------------------------------------------------------
+            |
+            | The product price shown to the user remains the exact
+            | price entered during listing creation.
+            |
+            */
+
             flash(
                 'success',
                 'Listing created successfully. Trust analysis: ' .
@@ -456,7 +566,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fraudScore,
                     2
                 ) .
-                '/100).'
+                '/100). Your original price remains unchanged.'
             );
         }
 
@@ -490,7 +600,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | Delete uploaded image if database failed
+        | Delete uploaded file if DB operation failed
         |--------------------------------------------------------------------------
         */
 
@@ -498,6 +608,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uploadedAbsolutePath !== null &&
             is_file($uploadedAbsolutePath)
         ) {
+
             @unlink(
                 $uploadedAbsolutePath
             );
@@ -523,7 +634,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /*
         |--------------------------------------------------------------------------
-        | User-friendly error
+        | User message
         |--------------------------------------------------------------------------
         */
 
@@ -686,7 +797,7 @@ include __DIR__ . '/includes/header.php';
                         trim(
                             (string)(
                                 $_POST['condition']
-                                ?? ''
+                                ?? 'new'
                             )
                         )
                     );
@@ -743,6 +854,10 @@ include __DIR__ . '/includes/header.php';
                     )
                 ) ?>"
             >
+
+            <small class="muted">
+                This is your original selling price. AI risk analysis will not change it.
+            </small>
 
         </div>
 
