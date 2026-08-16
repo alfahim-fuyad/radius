@@ -65,7 +65,7 @@ include dirname(__DIR__) . '/includes/header.php';
         <h2>Fraud Queue</h2>
 
         <p>
-            Review explainable fraud-risk scores.
+            Review explainable fraud-risk ratings.
             Admin makes the final decision.
         </p>
 
@@ -82,7 +82,7 @@ include dirname(__DIR__) . '/includes/header.php';
 
             <th>Product</th>
             <th>Seller</th>
-            <th>Score</th>
+            <th>Fraud Rating</th>
             <th>Trust</th>
             <th>Status</th>
             <th>Main Risk</th>
@@ -123,7 +123,7 @@ include dirname(__DIR__) . '/includes/header.php';
                     </td>
 
 
-                    <!-- FRAUD SCORE -->
+                    <!-- FRAUD RATING -->
 
                     <td>
 
@@ -146,20 +146,37 @@ include dirname(__DIR__) . '/includes/header.php';
                     </td>
 
 
-                    <!-- TRUST -->
+                    <!-- TRUST / FRAUD RISK STATUS -->
 
                     <td>
 
-                        <?php if ($l['trust_status']): ?>
+                        <?php if ($l['fraud_score'] !== null): ?>
 
-                            <span
-                                class="badge <?= e(
-                                    trust_class($l['trust_status'])
-                                ) ?>"
-                            >
-                                <?= e(
-                                    trust_label($l['trust_status'])
-                                ) ?>
+                            <?php
+
+                            $fraudRating = (float)$l['fraud_score'];
+
+                            if ($fraudRating < 60) {
+
+                                $displayStatus = 'Safe';
+                                $displayClass = 'badge-success';
+
+                            } elseif ($fraudRating < 70) {
+
+                                $displayStatus = 'Suspicious';
+                                $displayClass = 'badge-warning';
+
+                            } else {
+
+                                $displayStatus = 'High Risk';
+                                $displayClass = 'badge-danger';
+
+                            }
+
+                            ?>
+
+                            <span class="badge <?= e($displayClass) ?>">
+                                <?= e($displayStatus) ?>
                             </span>
 
                         <?php else: ?>
@@ -182,7 +199,7 @@ include dirname(__DIR__) . '/includes/header.php';
                     </td>
 
 
-                    <!-- EXPLANATION -->
+                    <!-- MAIN RISK / EXPLANATION -->
 
                     <td>
 
