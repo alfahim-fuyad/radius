@@ -1,5 +1,3 @@
-অবশ্যই। নিচেরটা **পুরো `README.md` file হিসেবে সরাসরি GitHub-এ paste করার মতো**, proper GitHub README style-এ সাজানো। আপনার বর্তমান **PHP + MySQL + FastAPI AI + Render + Aiven MySQL** setup অনুযায়ী updated রাখা হয়েছে।
-
 ````markdown
 # RADIUS — Hyperlocal Secondhand Marketplace
 
