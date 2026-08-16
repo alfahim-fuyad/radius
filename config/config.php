@@ -76,6 +76,13 @@ function env_value(string $key, ?string $default = null): ?string {
 define('APP_ENV', env_value('APP_ENV', 'development'));
 define('APP_URL', rtrim((string) env_value('APP_URL', 'http://localhost:3000'), '/'));
 define('AI_SERVICE_URL', rtrim((string) env_value('AI_SERVICE_URL', 'http://127.0.0.1:8001'), '/'));
+define(
+    'ENABLE_IMAGE_EMBEDDINGS',
+    filter_var(
+        env_value('ENABLE_IMAGE_EMBEDDINGS', 'false'),
+        FILTER_VALIDATE_BOOLEAN
+    )
+);
 define('DEFAULT_RADIUS_KM', (float) env_value('DEFAULT_RADIUS_KM', '5'));
 define('MAX_UPLOAD_BYTES', max(1, (int) env_value('MAX_UPLOAD_MB', '5')) * 1024 * 1024);
 define('UPLOAD_LISTING_DIR', dirname(__DIR__) . '/uploads/listings');

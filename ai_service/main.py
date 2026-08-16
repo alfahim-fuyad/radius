@@ -7,21 +7,23 @@ from pathlib import Path
 from typing import Any
 
 import imagehash
-import pandas as pd
 import requests
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from PIL import Image
 from pydantic import BaseModel, Field
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
+
+# pandas / scikit-learn are intentionally NOT imported here. They are only
+# imported lazily, inside price_model()/text_model(), and only when
+# ENABLE_ML_FALLBACK is turned on. Importing them at module scope loads
+# ~100+ MB into RAM the moment the FastAPI process starts, even if the
+# ML fallback is never used. On a 512 MB shared instance (PHP + FastAPI)
+# that startup cost alone can trigger OOM kills, so it must stay opt-in.
+# (Safe because `from __future__ import annotations` above makes every
+# type hint in this file a lazy string, so "-> Pipeline" annotations below
+# never need Pipeline to actually be imported.)
 
 try:
     # Package imports are required when uvicorn starts from the project root.
-    from ai_service.model.image_encoder import encode_image
     from ai_service.image_similarity.embedding import load_image_from_bytes
     from ai_service.image_similarity.similarity import (
         classify_similarity,
@@ -31,7 +33,6 @@ try:
     )
 except ModuleNotFoundError:
     # Keep direct execution from inside ai_service working for local scripts.
-    from model.image_encoder import encode_image
     from image_similarity.embedding import load_image_from_bytes
     from image_similarity.similarity import (
         classify_similarity,
@@ -61,6 +62,28 @@ SERPAPI_KEY = os.getenv("SERPAPI_KEY", "").strip()
 SERPAPI_URL = "https://serpapi.com/search.json"
 
 SEARCH_TIMEOUT = 10
+
+# ResNet50 is intentionally opt-in. Loading the model can exceed the memory
+# limit of a small web instance that also hosts PHP and the rest of FastAPI.
+# Enable this only when the AI service has a dedicated, appropriately sized
+# instance.
+ENABLE_IMAGE_EMBEDDINGS = os.getenv(
+    "ENABLE_IMAGE_EMBEDDINGS",
+    "false",
+).strip().lower() in {"1", "true", "yes", "on"}
+
+# pandas + scikit-learn (RandomForest price model, TF-IDF/NaiveBayes text
+# model) are also intentionally opt-in. Even though both models are lazily
+# trained on first use via @lru_cache, simply *importing* pandas/sklearn at
+# process startup can cost 100+ MB of RAM. On a 512 MB instance shared with
+# PHP that is often enough by itself to cause restarts. When disabled,
+# price analysis relies on live SerpApi search only (no ML fallback) and
+# fraud text analysis relies on the heuristic/rule-based signals only
+# (banned phrases, prohibited terms, price/image signals, text reuse).
+ENABLE_ML_FALLBACK = os.getenv(
+    "ENABLE_ML_FALLBACK",
+    "false",
+).strip().lower() in {"1", "true", "yes", "on"}
 
 
 # ============================================================
@@ -147,9 +170,26 @@ def root() -> dict[str, Any]:
         "service": "RADIUS Explainable Fraud Service",
         "status": "ok",
         "version": "2.1.0",
-        "price_search": "SerpApi Google Search + ML fallback",
-        "image_model": "ResNet50",
-        "image_embedding_dimension": 2048,
+        "price_search": (
+            "SerpApi Google Search + ML fallback"
+            if ENABLE_ML_FALLBACK
+            else "SerpApi Google Search only (ML fallback disabled)"
+        ),
+        "fraud_text_model": (
+            "TF-IDF + Naive Bayes"
+            if ENABLE_ML_FALLBACK
+            else "disabled (rule-based signals only)"
+        ),
+        "image_model": (
+            "ResNet50"
+            if ENABLE_IMAGE_EMBEDDINGS
+            else "disabled (pHash only)"
+        ),
+        "image_embedding_dimension": (
+            2048
+            if ENABLE_IMAGE_EMBEDDINGS
+            else None
+        ),
     }
 
 
@@ -158,7 +198,12 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "serpapi_configured": bool(SERPAPI_KEY),
-        "image_model": "ResNet50",
+        "ml_fallback_enabled": ENABLE_ML_FALLBACK,
+        "image_model": (
+            "ResNet50"
+            if ENABLE_IMAGE_EMBEDDINGS
+            else "disabled (pHash only)"
+        ),
         "version": "2.1.0",
     }
 
@@ -214,6 +259,14 @@ async def hash_image(
 async def image_embedding(
     image: UploadFile = File(...),
 ) -> dict[str, Any]:
+    if not ENABLE_IMAGE_EMBEDDINGS:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "ResNet image embeddings are disabled on this shared "
+                "instance. Use pHash or a dedicated AI service."
+            ),
+        )
 
     allowed_types = {
         "image/jpeg",
@@ -239,6 +292,13 @@ async def image_embedding(
         opened = load_image_from_bytes(
             image_bytes
         )
+
+        # Import PyTorch only when the opt-in endpoint is actually enabled.
+        # This keeps the normal PHP + FastAPI process lightweight.
+        try:
+            from ai_service.model.image_encoder import encode_image
+        except ModuleNotFoundError:
+            from model.image_encoder import encode_image
 
         embedding = encode_image(
             opened
@@ -460,6 +520,21 @@ def image_risk(
 @lru_cache(maxsize=1)
 def price_model() -> Pipeline:
 
+    if not ENABLE_ML_FALLBACK:
+        raise RuntimeError(
+            "ML price fallback is disabled on this shared instance "
+            "(ENABLE_ML_FALLBACK=false). Relying on live SerpApi search "
+            "only."
+        )
+
+    # Imported lazily so a normal process never pays the pandas/sklearn
+    # RAM cost unless the ML fallback is explicitly turned on.
+    import pandas as pd
+    from sklearn.compose import ColumnTransformer
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import OneHotEncoder
+
     if not PRICE_CSV.exists():
 
         raise FileNotFoundError(
@@ -539,8 +614,14 @@ def ml_market_price(
     condition: str,
 ) -> float:
 
+    # price_model() raises immediately when ENABLE_ML_FALLBACK is off, so
+    # pandas is only imported below once we know the fallback is enabled.
+    model = price_model()
+
+    import pandas as pd
+
     expected = float(
-        price_model().predict(
+        model.predict(
             pd.DataFrame(
                 [
                     {
@@ -1410,6 +1491,20 @@ def price_risk(
 
 @lru_cache(maxsize=1)
 def text_model() -> Pipeline:
+
+    if not ENABLE_ML_FALLBACK:
+        raise RuntimeError(
+            "ML text fraud model is disabled on this shared instance "
+            "(ENABLE_ML_FALLBACK=false). Relying on heuristic/rule-based "
+            "signals only (banned phrases, prohibited terms, text reuse)."
+        )
+
+    # Imported lazily so a normal process never pays the pandas/sklearn
+    # RAM cost unless the ML fallback is explicitly turned on.
+    import pandas as pd
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.naive_bayes import MultinomialNB
+    from sklearn.pipeline import Pipeline
 
     if not FRAUD_CSV.exists():
 

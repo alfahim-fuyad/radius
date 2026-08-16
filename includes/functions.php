@@ -698,6 +698,7 @@ function ai_image_embedding(
 ): ?array {
 
     if (
+        !ENABLE_IMAGE_EMBEDDINGS ||
         !function_exists('curl_init') ||
         !is_file($absolutePath)
     ) {

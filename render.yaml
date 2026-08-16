@@ -39,6 +39,19 @@ services:
       - key: AI_SERVICE_URL
         sync: false
 
+      # ResNet50 can exceed the memory limit when PHP and FastAPI share one
+      # instance. pHash-based image analysis remains available.
+      - key: ENABLE_IMAGE_EMBEDDINGS
+        value: "false"
+
+      # pandas + scikit-learn (RandomForest price fallback, TF-IDF/Naive
+      # Bayes fraud text model) are also opt-in. Importing them alone costs
+      # 100+ MB of RAM at process start even before any model is trained.
+      # Keep disabled on the free 512 MB instance; live SerpApi price
+      # search and rule-based/heuristic fraud signals remain available.
+      - key: ENABLE_ML_FALLBACK
+        value: "false"
+
       # SerpApi
       - key: SERPAPI_KEY
         sync: false
